@@ -29,7 +29,7 @@
 			levels = lvls;
 			movie = mov;
 			this.game = game;
-			update_list = new Dictionary();
+			update_list = new Dictionary(true);
 			
 			// Define the gravity vector
 			var gravity:b2Vec2 = new b2Vec2(0.0, 30.0);
@@ -39,6 +39,8 @@
 			
 			// Construct a world object
 			m_world = new b2World(gravity, doSleep);
+			m_world.SetContactFilter(new ContactFilter());
+			
 			
 			// set debug draw
 			var dbgDraw:b2DebugDraw = new b2DebugDraw();
@@ -141,7 +143,7 @@
 			}
 		}
 		
-		public function AddPlayer(pos:Point, flavor:String = "melee"):Player
+		public function AddPlayer(pos:Point, flavor:String):Player
 		{
 			var body:b2Body;
 			var bodyDef:b2BodyDef;
@@ -158,7 +160,7 @@
 			
 			switch (flavor)
 			{
-				case "melee":
+				case "melee fire":
 				//create the player:
 				fixtureDef = new b2FixtureDef();
 				fixtureDef.shape = new b2CircleShape(0.98);
@@ -190,13 +192,126 @@
 				body.CreateFixture(fixtureDef);
 
 				break;
+				//melee fire
+				
+				
+				case "melee water":
+				//create the player:
+				fixtureDef = new b2FixtureDef();
+				fixtureDef.shape = new b2CircleShape(0.98);
+				fixtureDef.friction = 0.3;
+				fixtureDef.restitution = 0.2;
+				fixtureDef.density = 1;
+				body.CreateFixture(fixtureDef);
+
+				//create foot sensor:
+				fixtureDef = new b2FixtureDef();
+				circleShape = new b2CircleShape();
+				circleShape.SetRadius(0.9);
+				circleShape.SetLocalPosition(new b2Vec2(0,0.3));
+				fixtureDef.shape = circleShape;
+				fixtureDef.density = 0;
+				fixtureDef.isSensor = true;
+				fixtureDef.userData = {role:"player foot"}
+				body.CreateFixture(fixtureDef);
+				
+				//slippery head:
+				fixtureDef = new b2FixtureDef();
+				circleShape = new b2CircleShape();
+				circleShape.SetRadius(0.99);
+				circleShape.SetLocalPosition(new b2Vec2(0,-0.02));
+				fixtureDef.shape = circleShape;
+				fixtureDef.density = 0;
+				fixtureDef.friction = 0.1;
+				fixtureDef.restitution = 0.1;
+				body.CreateFixture(fixtureDef);
+
+				break;
+				//melee water
+				
+				
+				case "ranged fire":
+				//create the player:
+				fixtureDef = new b2FixtureDef();
+				fixtureDef.shape = new b2CircleShape(0.73);
+				fixtureDef.friction = 0.3;
+				fixtureDef.restitution = 0.2;
+				fixtureDef.density = 1;
+				body.CreateFixture(fixtureDef);
+
+				//create foot sensor:
+				fixtureDef = new b2FixtureDef();
+				circleShape = new b2CircleShape();
+				circleShape.SetRadius(0.65);
+				circleShape.SetLocalPosition(new b2Vec2(0,0.3));
+				fixtureDef.shape = circleShape;
+				fixtureDef.density = 0;
+				fixtureDef.isSensor = true;
+				fixtureDef.userData = {role:"player foot"}
+				body.CreateFixture(fixtureDef);
+				
+				//slippery head:
+				fixtureDef = new b2FixtureDef();
+				circleShape = new b2CircleShape();
+				circleShape.SetRadius(0.74);
+				circleShape.SetLocalPosition(new b2Vec2(0,-0.02));
+				fixtureDef.shape = circleShape;
+				fixtureDef.density = 0;
+				fixtureDef.friction = 0.1;
+				fixtureDef.restitution = 0.1;
+				body.CreateFixture(fixtureDef);
+
+				break;
+				//ranged fire
+				
+				default:
+				trace("No player of type: "+flavor);
 			}
-			body.SetUserData(new Player(body,flavor));
+			body.SetUserData(new Player(body,flavor,game));
 			update_list[body] = body.GetUserData().sprite;
 			game.player_list[body] = body.GetUserData();
 			movie.addChild(body.GetUserData().sprite);
 			return body.GetUserData();
 			
+		}
+		public function AddProjectile(pos:Point, vel:Point, flavor:String):Projectile{
+			var body:b2Body;
+			var bodyDef:b2BodyDef;
+			var fixtureDef:b2FixtureDef;
+			var circleShape:b2CircleShape;
+			
+			bodyDef = new b2BodyDef();
+			bodyDef.position.x = pos.x;
+			bodyDef.position.y = pos.y;
+			bodyDef.linearVelocity.x = vel.x;
+			bodyDef.linearVelocity.y = vel.y;
+			
+			bodyDef.type = b2Body.b2_dynamicBody;
+			bodyDef.bullet = true;
+			body = m_world.CreateBody(bodyDef);
+			
+			switch (flavor)
+			{
+				case "projectile fire":
+				//create the player:
+				fixtureDef = new b2FixtureDef();
+				fixtureDef.shape = new b2CircleShape(0.25);
+				fixtureDef.friction = 0;
+				fixtureDef.restitution = 1;
+				fixtureDef.density = 1;
+				body.CreateFixture(fixtureDef);
+
+				break;
+				//projectile fire
+				
+				default:
+				trace("No projectile of type: "+flavor);
+			}
+			body.SetUserData(new Projectile(body,flavor,game));
+			update_list[body] = body.GetUserData().sprite;
+			game.projectile_list[body] = body.GetUserData();
+			movie.addChild(body.GetUserData().sprite);
+			return body.GetUserData();
 		}
 		
 		public function Update(timeStep:Number)
@@ -205,63 +320,88 @@
 			m_world.ClearForces() ;
 			//m_world.DrawDebugData();
 			var body:*;
-			for(body in update_list)
-			{
-				update_list[body].x = 20 * body.GetPosition().x;
-				update_list[body].y = 20 * body.GetPosition().y;
+			for(body in update_list){
+				if(update_list[body]){
+					update_list[body].x = 20 * body.GetPosition().x;
+					update_list[body].y = 20 * body.GetPosition().y;
+				}
 			}
+			var contactEdge:b2ContactEdge;
+			var contact:b2Contact;
 			//ground check
 			for(body in game.player_list)
 			{
-				if(!game.player_list[body].ground){
-					game.player_list[body].airSince += timeStep;
-				}
-				game.player_list[body].ground = false;
-				body.SetLinearDamping(0.3);
-				game.player_list[body].NE = false;
-				game.player_list[body].NW = false;
-				
-				var contactEdge:b2ContactEdge = body.GetContactList();
-				var contact:b2Contact;
-				while(contactEdge){
-					contact = contactEdge.contact;
-					if(contact.IsTouching()){
-						if(contact.GetFixtureA().GetUserData()){
-							if(contact.GetFixtureA().GetUserData().role == "player foot"){
-								contact.GetFixtureA().GetBody().GetUserData().ground = true;
-								body.SetLinearDamping(2);
-								contact.GetFixtureA().GetBody().GetUserData().airSince = 0;
-								if(contact.GetFixtureB().GetUserData()){
-									if(contact.GetFixtureB().GetUserData().role == "brick NE"){
-										contact.GetFixtureA().GetBody().GetUserData().NE = true;
-									}
-									if(contact.GetFixtureB().GetUserData().role == "brick NW"){
-										contact.GetFixtureA().GetBody().GetUserData().NW = true;
-									}
-								}
-							}
-						}
-						//2
-						if(contact.GetFixtureB().GetUserData()){
-							if(contact.GetFixtureB().GetUserData().role == "player foot"){
-								contact.GetFixtureB().GetBody().GetUserData().ground = true;
-								body.SetLinearDamping(2);
-								contact.GetFixtureB().GetBody().GetUserData().airSince = 0;
-								if(contact.GetFixtureA().GetUserData()){
-									if(contact.GetFixtureA().GetUserData().role == "brick NE"){
-										contact.GetFixtureB().GetBody().GetUserData().NE = true;
-									}
-									if(contact.GetFixtureA().GetUserData().role == "brick NW"){
-										contact.GetFixtureB().GetBody().GetUserData().NW = true;
-									}
-								}
-							}
-						}
+				if(game.player_list[body]){
+					if(!game.player_list[body].ground){
+						game.player_list[body].airSince += timeStep;
 					}
-					contactEdge = contactEdge.next;
+					game.player_list[body].ground = false;
+					body.SetLinearDamping(0.3);
+					game.player_list[body].NE = false;
+					game.player_list[body].NW = false;
+					
+					contactEdge = body.GetContactList();
+					while(contactEdge){
+						contact = contactEdge.contact;
+						if(contact.IsTouching()){
+							if(contact.GetFixtureA().GetUserData()){
+								if(contact.GetFixtureA().GetUserData().role == "player foot"){
+									contact.GetFixtureA().GetBody().GetUserData().ground = true;
+									body.SetLinearDamping(2);
+									contact.GetFixtureA().GetBody().GetUserData().airSince = 0;
+									if(contact.GetFixtureB().GetUserData()){
+										if(contact.GetFixtureB().GetUserData().role == "brick NE"){
+											contact.GetFixtureA().GetBody().GetUserData().NE = true;
+										}
+										if(contact.GetFixtureB().GetUserData().role == "brick NW"){
+											contact.GetFixtureA().GetBody().GetUserData().NW = true;
+										}
+									}
+								}
+							}
+							//2
+							if(contact.GetFixtureB().GetUserData()){
+								if(contact.GetFixtureB().GetUserData().role == "player foot"){
+									contact.GetFixtureB().GetBody().GetUserData().ground = true;
+									body.SetLinearDamping(2);
+									contact.GetFixtureB().GetBody().GetUserData().airSince = 0;
+									if(contact.GetFixtureA().GetUserData()){
+										if(contact.GetFixtureA().GetUserData().role == "brick NE"){
+											contact.GetFixtureB().GetBody().GetUserData().NE = true;
+										}
+										if(contact.GetFixtureA().GetUserData().role == "brick NW"){
+											contact.GetFixtureB().GetBody().GetUserData().NW = true;
+										}
+									}
+								}
+							}
+						}
+						contactEdge = contactEdge.next;
+					}
 				}
 			}
 			//end ground check
+			//projectile hits count
+			for(body in game.projectile_list){
+				if(game.projectile_list[body]){
+					contactEdge = body.GetContactList();
+					while(contactEdge){
+						contact = contactEdge.contact;
+						if(contact.IsTouching()){
+							body.GetUserData().hits++;
+						}
+						contactEdge = contactEdge.next;
+					}
+					
+					if(body.GetUserData().hits > 3){
+						movie.removeChild(update_list[body]);
+						delete update_list[body];
+						delete game.projectile_list[body];
+						m_world.DestroyBody(body);
+					}
+				}
+			}
+			//end projectile hits count
 		}
 		//end update
 	}

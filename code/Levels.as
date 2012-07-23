@@ -17,7 +17,8 @@
 			map["O"] = "brick";
 			map["B"] = "bouncy";
 			map[" "] = "space";
-			map["1"] = "team 1";
+			map["1"] = "team fire";
+			map["2"] = "team water";
 			map["."] = "space"
 			
 			level[0] = new Object();
@@ -32,9 +33,9 @@
 									 "O...                         OO                                                              O",
 									 "O                                                        OO                                  O",
 									 "O                                  O                                                         O",
-									 "O                                                                                            O",
-									 "O                                         O                                                  O",
-									 "O                                                 OOO                                        O",
+									 "O                                                                   ...                      O",
+									 "O                                         O                         .2.                      O",
+									 "O                                                 OOO               ...                      O",
 									 "O                                                  O                                         O",
 									 "O                                                                                            O",
 									 "O                                                       OOOOOOO                              O",

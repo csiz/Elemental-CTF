@@ -24,6 +24,7 @@
 		//player data:
 		public var me:Player;
 		public var player_list:Dictionary;
+		public var projectile_list:Dictionary;
 		//Game controls.........................................................................
 		public var w:Boolean;
 		public var a:Boolean;
@@ -38,7 +39,8 @@
         {
 			//init data:
 			movie = new MovieClip();
-			player_list = new Dictionary();
+			player_list = new Dictionary(true);
+			projectile_list = new Dictionary(true);
 			addChild(movie);
 			levels = new Levels();
 			box2d = new Box2d(levels,movie,this);
@@ -59,7 +61,9 @@
 			
 			
 			box2d.LoadLevel(0);
-			me = box2d.AddPlayer(levels.GetSpawn(0,"team 1"));
+			me = box2d.AddPlayer(levels.GetSpawn(0,"team water"), "melee water");
+			box2d.AddPlayer(new Point(3,3), "melee fire");
+			box2d.AddPlayer(levels.GetSpawn(0,"team water"), "melee water");
 			
 			
 			time = getTimer();
@@ -76,6 +80,9 @@
 			}
 			if(w){
 				me.Jump(timeStep);
+			}
+			if(s){
+				me.Down(timeStep);
 			}
 			//todo: check for ground collision and make a variable timeSinceLastTouchedGround
 			//Game loop starts here............................................................*
@@ -102,8 +109,8 @@
 			movie.y += ( ( 200  -me.sprite.y ) - movie.y ) * 0.1;
 			
 			//Message
-			//message.text = (1000/timeStep).toFixed(2);
-			message.text = me.actionSince.toFixed(5);
+			message.text = (1000/timeStep).toFixed(2);
+			//message.text = me.actionSince.toFixed(5);
 		}
 		
 		public function Action(origin:String, x:Number = 0, y:Number = 0){
@@ -123,7 +130,7 @@
 		
 		protected function MouseDown(event:MouseEvent):void{
 			if(mouse == false){
-				Action("click", event.localX, event.localY);
+				Action("click", event.stageX, event.stageY);
 			}
 			mouse = true;
 		}
