@@ -264,17 +264,50 @@
 				break;
 				//ranged fire
 				
+				
+				case "ranged water":
+				//create the player:
+				fixtureDef = new b2FixtureDef();
+				fixtureDef.shape = new b2CircleShape(0.73);
+				fixtureDef.friction = 0.3;
+				fixtureDef.restitution = 0.2;
+				fixtureDef.density = 1;
+				body.CreateFixture(fixtureDef);
+
+				//create foot sensor:
+				fixtureDef = new b2FixtureDef();
+				circleShape = new b2CircleShape();
+				circleShape.SetRadius(0.65);
+				circleShape.SetLocalPosition(new b2Vec2(0,0.3));
+				fixtureDef.shape = circleShape;
+				fixtureDef.density = 0;
+				fixtureDef.isSensor = true;
+				fixtureDef.userData = {role:"player foot"}
+				body.CreateFixture(fixtureDef);
+				
+				//slippery head:
+				fixtureDef = new b2FixtureDef();
+				circleShape = new b2CircleShape();
+				circleShape.SetRadius(0.74);
+				circleShape.SetLocalPosition(new b2Vec2(0,-0.02));
+				fixtureDef.shape = circleShape;
+				fixtureDef.density = 0;
+				fixtureDef.friction = 0.1;
+				fixtureDef.restitution = 0.1;
+				body.CreateFixture(fixtureDef);
+
+				break;
+				//ranged water
 				default:
 				trace("No player of type: "+flavor);
 			}
 			body.SetUserData(new Player(body,flavor,game));
 			update_list[body] = body.GetUserData().sprite;
 			game.player_list[body] = body.GetUserData();
-			movie.addChild(body.GetUserData().sprite);
 			return body.GetUserData();
 			
 		}
-		public function AddProjectile(pos:Point, vel:Point, flavor:String):Projectile{
+		public function AddProjectile(pos:Point, vel:Point, flavor:String,id:uint):Projectile{
 			var body:b2Body;
 			var bodyDef:b2BodyDef;
 			var fixtureDef:b2FixtureDef;
@@ -304,12 +337,51 @@
 				break;
 				//projectile fire
 				
+				case "projectile water":
+				//create the player:
+				fixtureDef = new b2FixtureDef();
+				fixtureDef.shape = new b2CircleShape(0.25);
+				fixtureDef.friction = 1;
+				fixtureDef.restitution = 0.5;
+				fixtureDef.density = 1;
+				body.SetBullet(false);
+				body.CreateFixture(fixtureDef);
+
+				break;
+				//projectile water
+				
 				default:
-				trace("No projectile of type: "+flavor);
+				trace("Box2d:No projectile of type: "+flavor);
 			}
-			body.SetUserData(new Projectile(body,flavor,game));
+			body.SetUserData(new Projectile(body,flavor,game,id));
 			update_list[body] = body.GetUserData().sprite;
 			game.projectile_list[body] = body.GetUserData();
+			return body.GetUserData();
+		}
+		
+		public function AddFlag(pos:Point, team:String):Flag{
+			var body:b2Body;
+			var bodyDef:b2BodyDef;
+			var fixtureDef:b2FixtureDef;
+			var circleShape:b2CircleShape;
+			
+			bodyDef = new b2BodyDef();
+			bodyDef.position.x = pos.x;
+			bodyDef.position.y = pos.y;
+			
+			bodyDef.type = b2Body.b2_staticBody;
+			
+			body = m_world.CreateBody(bodyDef);
+			
+			fixtureDef = new b2FixtureDef();
+			fixtureDef.shape = new b2CircleShape(1);
+			fixtureDef.isSensor = true;
+			body.CreateFixture(fixtureDef);
+
+
+			body.SetUserData(new Flag(body,team,pos,game));
+			update_list[body] = body.GetUserData().sprite;
+			game.flag_list[body] = body.GetUserData();
 			movie.addChild(body.GetUserData().sprite);
 			return body.GetUserData();
 		}
@@ -320,12 +392,6 @@
 			m_world.ClearForces() ;
 			//m_world.DrawDebugData();
 			var body:*;
-			for(body in update_list){
-				if(update_list[body]){
-					update_list[body].x = 20 * body.GetPosition().x;
-					update_list[body].y = 20 * body.GetPosition().y;
-				}
-			}
 			var contactEdge:b2ContactEdge;
 			var contact:b2Contact;
 			//ground check
@@ -346,15 +412,17 @@
 						if(contact.IsTouching()){
 							if(contact.GetFixtureA().GetUserData()){
 								if(contact.GetFixtureA().GetUserData().role == "player foot"){
-									contact.GetFixtureA().GetBody().GetUserData().ground = true;
-									body.SetLinearDamping(2);
-									contact.GetFixtureA().GetBody().GetUserData().airSince = 0;
-									if(contact.GetFixtureB().GetUserData()){
-										if(contact.GetFixtureB().GetUserData().role == "brick NE"){
-											contact.GetFixtureA().GetBody().GetUserData().NE = true;
-										}
-										if(contact.GetFixtureB().GetUserData().role == "brick NW"){
-											contact.GetFixtureA().GetBody().GetUserData().NW = true;
+									if(!contact.GetFixtureB().IsSensor()){
+										contact.GetFixtureA().GetBody().GetUserData().ground = true;
+										body.SetLinearDamping(2);
+										contact.GetFixtureA().GetBody().GetUserData().airSince = 0;
+										if(contact.GetFixtureB().GetUserData()){
+											if(contact.GetFixtureB().GetUserData().role == "brick NE"){
+												contact.GetFixtureA().GetBody().GetUserData().NE = true;
+											}
+											if(contact.GetFixtureB().GetUserData().role == "brick NW"){
+												contact.GetFixtureA().GetBody().GetUserData().NW = true;
+											}
 										}
 									}
 								}
@@ -362,15 +430,17 @@
 							//2
 							if(contact.GetFixtureB().GetUserData()){
 								if(contact.GetFixtureB().GetUserData().role == "player foot"){
-									contact.GetFixtureB().GetBody().GetUserData().ground = true;
-									body.SetLinearDamping(2);
-									contact.GetFixtureB().GetBody().GetUserData().airSince = 0;
-									if(contact.GetFixtureA().GetUserData()){
-										if(contact.GetFixtureA().GetUserData().role == "brick NE"){
-											contact.GetFixtureB().GetBody().GetUserData().NE = true;
-										}
-										if(contact.GetFixtureA().GetUserData().role == "brick NW"){
-											contact.GetFixtureB().GetBody().GetUserData().NW = true;
+									if(!contact.GetFixtureA().IsSensor()){
+										contact.GetFixtureB().GetBody().GetUserData().ground = true;
+										body.SetLinearDamping(2);
+										contact.GetFixtureB().GetBody().GetUserData().airSince = 0;
+										if(contact.GetFixtureA().GetUserData()){
+											if(contact.GetFixtureA().GetUserData().role == "brick NE"){
+												contact.GetFixtureB().GetBody().GetUserData().NE = true;
+											}
+											if(contact.GetFixtureA().GetUserData().role == "brick NW"){
+												contact.GetFixtureB().GetBody().GetUserData().NW = true;
+											}
 										}
 									}
 								}
@@ -381,27 +451,47 @@
 				}
 			}
 			//end ground check
-			//projectile hits count
+			//projectile hits count/timer
+			var fixture_hit:b2Fixture;
 			for(body in game.projectile_list){
 				if(game.projectile_list[body]){
+					body.GetUserData().time += timeStep;
 					contactEdge = body.GetContactList();
 					while(contactEdge){
 						contact = contactEdge.contact;
 						if(contact.IsTouching()){
-							body.GetUserData().hits++;
+							if(contact.GetFixtureA().GetBody() != body){
+								fixture_hit = contact.GetFixtureA();
+							}else{
+								fixture_hit = contact.GetFixtureB();
+							}
+							if(!fixture_hit.IsSensor()){
+								body.GetUserData().hits++;
+							}
 						}
 						contactEdge = contactEdge.next;
 					}
 					
-					if(body.GetUserData().hits > 3){
-						movie.removeChild(update_list[body]);
-						delete update_list[body];
-						delete game.projectile_list[body];
-						m_world.DestroyBody(body);
-					}
+					body.GetUserData().Update(timeStep);
 				}
 			}
 			//end projectile hits count
+			//flag update
+			for(body in game.flag_list){
+				if(game.flag_list[body]){
+					if(game.flag_list[body].carry){
+						body.SetPosition(game.flag_list[body].carry.body.GetPosition());
+					}
+				}
+			}
+			//end flag update
+			//screen update
+			for(body in update_list){
+				if(update_list[body]){
+					update_list[body].x = 20 * body.GetPosition().x;
+					update_list[body].y = 20 * body.GetPosition().y;
+				}
+			}
 		}
 		//end update
 	}

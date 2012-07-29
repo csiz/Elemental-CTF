@@ -19,7 +19,9 @@
 			map[" "] = "space";
 			map["1"] = "team fire";
 			map["2"] = "team water";
-			map["."] = "space"
+			map["a"] = "fire flag";
+			map["b"] = "water flag";
+			map["."] = "space";
 			
 			level[0] = new Object();
 			
@@ -42,10 +44,10 @@
 									 "O                                                                    O                       O",
 									 "O                                                                                            O",
 									 "O                                                                                            O",
-									 "O                                                                                            O",
+									 "O                                                                    b                       O",
 									 "O                                                              OOOOOOOOOOOO OOOOOOOO         O",
 									 "O                                                             OOOO                           O",
-									 "O                                                            OOOO                            O",
+									 "O                                                       a    OOOO                            O",
 									 "O                                                  OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO         O",
 									 "O                                                 OOOOOO                                   OOO",
 									 "O                                                OOOOOO                                      O",
@@ -218,13 +220,13 @@
 			
 		}
 		
-		public function GetSpawn(lvl:int, team:String):Point
+		public function GetSpawn(lvl:int, what:String):Point
 		{
 			for(var y = 0;y < level[lvl].height;y++)
 			{
 				for(var x = 0;x < level[lvl].width;x++)
 				{
-					if(GetType(lvl, x, y) == team)
+					if(GetType(lvl, x, y) == what)
 					{
 						return new Point(x,y);
 					}

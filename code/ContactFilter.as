@@ -27,6 +27,9 @@
 					}
 					if(fixtureA.GetBody().GetUserData().role == "projectile"){
 						if(fixtureB.GetBody().GetUserData().role == "projectile"){
+							if(fixtureB.GetBody().GetUserData().flavor == "projectile water" && fixtureA.GetBody().GetUserData().flavor == "projectile water"){
+								return true;
+							}
 							if(fixtureB.GetBody().GetUserData().team == fixtureA.GetBody().GetUserData().team){
 								return false;
 							}
