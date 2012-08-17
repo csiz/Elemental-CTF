@@ -6,24 +6,27 @@
 	import flash.net.Socket;
 	import flash.events.Event;
 	import flash.events.MouseEvent;
+	import flash.utils.ByteArray;
 	
 
 	public class MainScreen extends MovieClip{
 		private var functions:Array;
 		private var ready:Boolean;
 		public var connection:Connection;
+		public var main:Main;
 		
-		public function MainScreen(){
+		public function MainScreen(main:Main){
+			this.main = main;
 			ready = false;
 			functions = new Array;
 			
-			connection = new Connection(Main.SERVER,Main.PORT);
+			connection = new Connection(main.SERVER,main.PORT);
 			
-			if(Main.save.data.id == null){
+			//if(main.save.data.id == null){
 				NewID();
-			}else{
-				LoadID();
-			}
+			//}else{
+				//LoadID();
+			//}todo
 			
 			GetPlayer();
 			name_button.addEventListener(MouseEvent.CLICK, ChangeName);
@@ -34,17 +37,42 @@
 		}
 		public function PlayTheGame(event){
 			//todo
-			//sup
+			connection.Add (function(socket:Socket)
+							{
+					  		 	socket.writeInt(6);
+							 	socket.writeBytes(main.id,0,32);
+							 	socket.writeBytes(main.password,0,32);
+					  		},4,function(socket:Socket)
+							{
+								if(socket.readInt() == 1){
+									connection.Continue(Connection.Nothing,68,function(socket:Socket)
+														{
+															var address = new String()
+															var port = new int;
+															var room = new ByteArray()
+															
+															address = socket.readUTFBytes(32);
+															port = socket.readInt()
+															socket.readBytes(room,0,32);
+															trace("Found a game on server ",address,":",port," inside room: ",room);
+															main.removeChild(main.screen);
+															EndConnection();
+															main.LoadGame(address,port,room);
+													  	});
+								}else{
+									trace("Game not found.");
+								}
+						  	});
 		}
 		
 		public function ChangeName(event){
-			Main.name = Utils.Standardize(name_text.text);
+			main.display_name = Utils.Standardize(name_text.text);
 			connection.Add (function(socket:Socket)
 								{
 								 	socket.writeInt(4);
-									socket.writeBytes(Main.id,0,32);
-							 		socket.writeBytes(Main.password,0,32);
-									socket.writeBytes(Main.name,0,32);
+									socket.writeBytes(main.id,0,32);
+							 		socket.writeBytes(main.password,0,32);
+									socket.writeBytes(main.display_name,0,32);
 						 		},4,function(socket:Socket)
 								{
 									if(socket.readInt() == 1){
@@ -74,34 +102,34 @@
 								 	socket.writeInt(2);
 						 		},32,function(socket:Socket)
 								{
-									socket.readBytes(Main.id,0,32);
-									Main.save.data.id = Main.id;
-									Main.password = Utils.Hash(Main.id,"");
-									Main.save.data.password = Main.password;
-									Main.save.flush();
-									trace("New id and default password: ",Main.id);
+									socket.readBytes(main.id,0,32);
+									main.save.data.id = main.id;
+									main.password = Utils.Hash(main.id,"");
+									main.save.data.password = main.password;
+									main.save.flush();
+									trace("New id and default password: ",main.id);
 							  	});
 		}
 		public function LoadID(){
-			Main.id = Main.save.data.id;
-			Main.password = Main.save.data.password;
-			trace("Loaded id: ",Main.id);
+			main.id = main.save.data.id;
+			main.password = main.save.data.password;
+			trace("Loaded id: ",main.id);
 		}
 		public function GetPlayer(){
 			connection.Add (function(socket:Socket)
 							{
 					  		 	socket.writeInt(3);
-							 	socket.writeBytes(Main.id,0,32);
-							 	socket.writeBytes(Main.password,0,32);
+							 	socket.writeBytes(main.id,0,32);
+							 	socket.writeBytes(main.password,0,32);
 					  		},4,function(socket:Socket)
 							{
 								if(socket.readInt() == 1){
 									connection.Continue(Connection.Nothing,292,function(socket:Socket)
 														{
-															socket.readBytes(Main.name,0,32);
-															socket.readBytes(Main.mail,0,256);
-															Main.points = socket.readInt();
-															trace("Login success, name: ",Main.name,", mail: ", Main.mail,", points: ",Main.points);
+															socket.readBytes(main.display_name,0,32);
+															socket.readBytes(main.mail,0,256);
+															main.points = socket.readInt();
+															trace("Login success, name: ",main.display_name,", mail: ", main.mail,", points: ",main.points);
 															Ready();
 													  	});
 								}else{
