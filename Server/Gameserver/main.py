@@ -33,13 +33,21 @@ players_lock = threading.RLock()
 
 
 
-
+def PlayerLost(player,room):
+	#check if player/room is none
+	pass
+	#todo, what to do in case an error
 
 def MessageDone(stream,player,room):
 	pass
+	#todo, remove plaer successfully
 
 def Synchronize(stream,player,room):
-	stream.write('f',room.time)
+	stream.write('f',time.time() - room.time)
+
+def GetID(stream,player,room):
+	stream.write('i',player.id)
+
 
 
 ###############################################################################################################################
@@ -52,6 +60,7 @@ def RegisterPlayer(stream):#read player id, writes 1(success) or 0(fail) or 2(ke
 		with players_lock:
 			if id in players:
 				player = players[id]
+				del players[id]
 				break
 		stream.write('i',2)
 		time.sleep(1)
@@ -61,8 +70,11 @@ def RegisterPlayer(stream):#read player id, writes 1(success) or 0(fail) or 2(ke
 		return None
 
 	with rooms_lock:
-		room = rooms[player.id]
-		room.AddPlayer(player)
+		if player.room_id in rooms:
+			room = rooms[player.room_id]
+			room.AddPlayer(player)
+		else:
+			raise Exception("The room was disbanded before the player could join.")
 
 	stream.write('i',1)
 
@@ -78,7 +90,8 @@ def RegisterPlayer(stream):#read player id, writes 1(success) or 0(fail) or 2(ke
 
 MessageHandler = {#reads, returns:
 	0:MessageDone,#nothing
-	1:Synchronize,#write time
+	1:Synchronize,#write f time
+	2:GetID,#write i player.id
 
 }
 ###############################################################################################################################
@@ -90,6 +103,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 	def handle(self):
 		stream = SocketStream(self.request)
 		print ("Received connection from {}:{}".format(self.client_address[0],self.client_address[1]))
+		player,room = None,None
 		try:
 			(player,room) = RegisterPlayer(stream)
 			message_id = True
@@ -98,6 +112,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 				MessageHandler[message_id](stream,player,room)
 		except Exception as error:
 			print("A player has been lost, the error was:",str(error))
+			PlayerLost(player,room)
 		finally:
 			stream.close()
 			print ("Ended connection from {}:{}".format(self.client_address[0],self.client_address[1]))

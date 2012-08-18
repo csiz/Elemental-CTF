@@ -44,8 +44,13 @@
 		
 		
 		
-		public function Game()
+		public function Game(network:Network = null)
         {
+			if(network){
+				this.network = network;
+			}else{
+				//todo, tutorial/non server game
+			}
 			//init data:
 			id = 0;
 			
@@ -73,6 +78,8 @@
 		}
 		
 		public function Start(){
+			network.Start(this);
+			
 			//controls...
             addEventListener(Event.ENTER_FRAME,GameLoop);
 			stage.addEventListener(KeyboardEvent.KEY_DOWN,KeyDown);
@@ -80,7 +87,7 @@
 			stage.addEventListener(MouseEvent.MOUSE_DOWN,MouseDown);
 			stage.addEventListener(MouseEvent.MOUSE_UP,MouseUp);
 			
-			network = new Network(this);
+			
 			box2d.LoadLevel(0);
 			me = box2d.AddPlayer(levels.GetSpawn(0,"team fire"), "ranged fire");
 			network.AddUser(me);

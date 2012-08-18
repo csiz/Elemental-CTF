@@ -36,7 +36,7 @@
 			
 		}
 		public function PlayTheGame(event){
-			//todo
+			//todo retry if it fails
 			connection.Add (function(socket:Socket)
 							{
 					  		 	socket.writeInt(6);
@@ -55,7 +55,6 @@
 															port = socket.readInt()
 															socket.readBytes(room,0,32);
 															trace("Found a game on server ",address,":",port," inside room: ",room);
-															main.removeChild(main.screen);
 															EndConnection();
 															main.LoadGame(address,port,room);
 													  	});

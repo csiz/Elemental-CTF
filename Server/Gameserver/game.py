@@ -28,19 +28,21 @@ class Flag:
 class GameRoom:
 	#todo
 	def __init__(self):
-		players = {}
-		flags = {
+		self.players = {}
+		self.flags = {
 			"fire":Flag(),
 			"water":Flag()
 		}
 		self.time = time.time()
-		
+		self.id_count = 1
 
-		lock = threading.RLock()
+		self.lock = threading.RLock()
 
 		print("Created a new room")
 
 	def AddPlayer(self,player):
-		with lock:
-			players[player.id] = player
+		with self.lock:
+			player.id = self.id_count
+			self.id_count += 1
+			self.players[player.id] = player
 

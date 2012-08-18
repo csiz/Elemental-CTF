@@ -2,6 +2,7 @@
 	import flash.display.MovieClip;
 	import code.game.Game;
 	import code.menu.MainScreen;
+	import code.game.Network;
 	import flash.utils.ByteArray;
 	import flash.net.SharedObject;
 	
@@ -31,11 +32,30 @@
 		}
 		
 		public function Menu(){
-			screen = new MainScreen(this);
-			screen.OnReady(function(){addChild(screen);});
+			Clear();
+			var menu = new MainScreen(this);
+			menu.OnReady(function(){Add(menu);});
 		}
 		public function LoadGame(address:String,port:int,room:ByteArray){
-			trace("todo");
+			Clear();
+			var network:Network = new Network();
+			network.Connect(address,port,id);
+			var game = new Game(network);
+			network.OnReady(function(){Add(game);game.Start();stage.focus = game});
+		}
+		public function Clear(){
+			if(screen){
+				removeChild(screen);
+				screen = null;
+			}
+		}
+		public function Add(what:MovieClip){
+			if(!screen){
+				screen = what;
+				addChild(screen);
+			}else{
+				throw ("Main: It's not supposed to add 2 screens at once.");
+			}
 		}
 	}
 }
