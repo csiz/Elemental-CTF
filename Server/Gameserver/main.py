@@ -89,6 +89,36 @@ def SendGameState(stream,player,room):
 		for o in p.objects:
 			stream.write('iiifffff', o.unique, o.role, o.flavor, o.x, o.y, o.vx, o.vy, o.health)
 
+def ReceiveAction(stream,player,room):
+	(time,) = stream.read('f')
+	with room.lock:
+		for id in room.players:
+			rooms.players[id].actions.append(Action(player.id,time))
+
+def ReceiveDamage(stream,player,room):
+	(damaged_id,time,ammount) = stream.read('fif')
+	with room.lock:
+		for id in room.players:
+			room.players[id].damage.append(Damage(damaged_id,time,ammount))
+
+def SendActions(stream,player,room):
+	with room.lock:
+		actions = player.actions
+		player.actions = []
+
+
+	stream.write('i',len(actions))
+	for a in actions:
+		stream.write('if',a.id,a.time)
+
+def SendDamage(stream,player,room):
+	with room.lock:
+		damages = player.damage
+		player.damage = []
+
+	stream.write('i',len(damages))
+	for d in damages:
+		stream.write('iff',d.id,d.time,d.ammount)
 
 
 ###############################################################################################################################
