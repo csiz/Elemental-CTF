@@ -238,14 +238,12 @@
 			game.network.Remove(unique);
 		}
 		public function Attack(damage:Number, id:int){
-			game.network.Attack(id,this.id,this.unique,damage);
 			health -= damage;
 			if(health <= 0){
-				Kill(id);
+				Kill();
 			}
 		}
-		public function Kill(id:int){
-			game.network.Kill(id,this.id,this.unique);
+		public function Kill(){
 			if(flag){
 				flag.Drop();
 			}

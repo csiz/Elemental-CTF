@@ -115,6 +115,15 @@
 				break;
 			}
 		}
+		public function Change(obj:*, health:Number, x:Number, y:Number, vx:Number, vy:Number){
+			obj.health = health;
+			if(obj.role == "player"){
+				if(obj.health <= 0){
+					obj.Kill();
+				}
+			}
+			box2d.ChangePositionAndSpeed(obj.body,x,y,vx,vy);
+		}
 		
 		protected function GameLoop(event:Event):void
         {	

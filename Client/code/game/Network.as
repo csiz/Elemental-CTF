@@ -151,18 +151,10 @@
 			
 		}
 //The functions that add and remove things......................................................
-		
-		public function Attack(attacker_id:int, receiver_id:int, unique:int, damage:Number){
-			//todo
-		}
-		public function Kill(attacker_id:int, receiver_id:int, unique:int){
-			//todo
-		}
 		public function Remove(unique:int){
 			if(objects[unique]){
 				delete objects[unique];
 			}
-			//todo
 		}
 		public function Add(object:*){
 			if(!object.unique){
@@ -171,10 +163,9 @@
 				}while(objects[object.unique]);
 			}
 			objects[object.unique] = object;
-			//todo
 		}
 		public function Action(id:int){
-			
+			//todo
 		}
 //End functions that add and remove things......................................................
 //Actions ......................................................................................	
@@ -207,7 +198,6 @@
 					}
 				}
 			}
-			trace("Sent data of player",player.id);
 		}
 		public function Get(socket:Socket){
 			var obj:*;
@@ -226,6 +216,7 @@
 				var time_of_update = socket.readFloat();
 				var counter = socket.readInt();
 				//todo maybe do something here too
+				//implement a game state number, when the numbers differ, it mean i have to request the lvl and stuff
 				for(;counter > 0;counter --){
 					var unique = socket.readInt();
 					var role = role_map[socket.readInt()];
@@ -245,20 +236,16 @@
 						obj = objects[unique];//easy access
 						//check for consistency
 						if( (obj.role == role) && (obj.flavor == flavor) && (obj.id == player_id) && (obj.team == player_team))
-						{//everything is alright, continue
-							obj.health = health;
-							game.box2d.ChangePositionAndSpeed(obj.body,x,y,vx,vy);
+						{
+							//everything is alright, continue
 						}else{//collision happened, stuff is weird here
 							trace("Network: you basically won the lottery.");
 						}
 					}else{//create it otherwise
 						obj = game.Add(role,flavor,x,y,vx,vy,player_id, unique, player_team);
-						obj.health = health;
-						game.box2d.ChangePositionAndSpeed(obj.body,x,y,vx,vy);
 					}
-					
+					game.Change(obj,health,x,y,vx,vy);
 				}
-				trace("Received data from player",player_id);
 			}
 			for(obj in objects){
 				if(objects[obj]){

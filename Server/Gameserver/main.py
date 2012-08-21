@@ -95,12 +95,6 @@ def ReceiveAction(stream,player,room):
 		for id in room.players:
 			rooms.players[id].actions.append(Action(player.id,time))
 
-def ReceiveDamage(stream,player,room):
-	(damaged_id,time,ammount) = stream.read('fif')
-	with room.lock:
-		for id in room.players:
-			room.players[id].damage.append(Damage(damaged_id,time,ammount))
-
 def SendActions(stream,player,room):
 	with room.lock:
 		actions = player.actions
@@ -110,15 +104,6 @@ def SendActions(stream,player,room):
 	stream.write('i',len(actions))
 	for a in actions:
 		stream.write('if',a.id,a.time)
-
-def SendDamage(stream,player,room):
-	with room.lock:
-		damages = player.damage
-		player.damage = []
-
-	stream.write('i',len(damages))
-	for d in damages:
-		stream.write('iff',d.id,d.time,d.ammount)
 
 
 ###############################################################################################################################

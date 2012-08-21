@@ -12,7 +12,6 @@ class Player:
 		self.objects = []
 		#incoming information
 		self.actions = []
-		self.damage = []
 
 class Object:
 	def __init__(self,unique,role,flavor,x,y,vx,vy,hp):
@@ -29,17 +28,6 @@ class Action:
 	def __init__(self,id,time):
 		self.id = id
 		self.time = time
-
-class Damage:
-	def __init__(self,id,time,ammount):
-		self.id = id
-		self.time = time
-		self.ammount = ammount
-
-
-
-
-
 
 
 
