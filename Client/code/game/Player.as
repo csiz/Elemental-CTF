@@ -10,8 +10,8 @@
 		public var sprite:MovieClip;
 		public var flavor:String;
 		public var body:b2Body;
-		public var id:uint;
-		public var unique:uint;
+		public var id:int;
+		public var unique:int;
 		public var speed:Number;
 		public var airSpeed:Number;
 		public var jump:Number;
@@ -37,10 +37,10 @@
 		public var regen:Number;
 		public var flag:Flag;
 		
-		public function Player(body:b2Body, flavor:String, game:Game)
+		public function Player(body:b2Body, flavor:String, id:int, unique:int, game:Game)
 		{
-			id = 0;
-			unique = 0;
+			this.id = id;
+			this.unique = unique;
 			this.game = game;
 			flag = null;
 			
@@ -139,6 +139,8 @@
 				
 				default:
 				trace("You wanted: "+flavor+". But that's not an option anymore");
+				//remember to add to Network flavor_map
+				//and in Game.Add
 			}
 			
 			game.movie.addChild(sprite);
@@ -202,6 +204,7 @@
 				}
 				if(actionSince > cooldown){
 					actionSince = 0;
+					game.network.Action(this.id);
 					switch (flavor)
 					{
 						case "melee fire":
@@ -234,13 +237,15 @@
 			delete game.player_list[body];
 			game.network.Remove(unique);
 		}
-		public function Attack(damage:Number, id:uint){
+		public function Attack(damage:Number, id:int){
+			game.network.Attack(id,this.id,this.unique,damage);
 			health -= damage;
 			if(health <= 0){
-				Kill();
+				Kill(id);
 			}
 		}
-		public function Kill(){
+		public function Kill(id:int){
+			game.network.Kill(id,this.id,this.unique);
 			if(flag){
 				flag.Drop();
 			}

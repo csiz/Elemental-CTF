@@ -12,6 +12,7 @@ import socketserver
 import time
 import struct
 import hashlib
+import copy
 
 from socketstream import *
 from game import * #GameRoom,Player class import
@@ -28,13 +29,17 @@ REGION = b'local'
 rooms = {}
 rooms_lock = threading.RLock()
 
+class Incoming:
+	def __init__(self,id,room_id):
+		self.id = id
+		self.room_id = room_id
+
 players = {}
 players_lock = threading.RLock()
 
 
 
 def PlayerLost(player,room):
-	#check if player/room is none
 	pass
 	#todo, what to do in case an error
 
@@ -48,6 +53,42 @@ def Synchronize(stream,player,room):
 def GetID(stream,player,room):
 	stream.write('i',player.id)
 
+def ReceivePlayerState(stream,player,room):
+	(id,team,time,count) = stream.read('iifi')
+
+	if not id == player.id:
+		pass
+		#todo, receiving information about another player for cheat/sync check
+
+	objects = []
+	for i in range(count):
+		(unique,role,flavor,x,y,vx,vy,hp) = stream.read('iiifffff')
+		objects.append(Object(unique,role,flavor,x,y,vx,vy,hp))
+
+	with room.lock:
+		player.team = team
+		player.time = time
+		player.objects = objects
+
+
+def SendGameState(stream,player,room):
+	nr_of_bytes = 4
+	players_to_send = []
+
+	with room.lock:
+		for id in room.players:
+			if id != player.id:
+				nr_of_bytes += 16 + ( 32 * len(room.players[id].objects) )
+				players_to_send.append(copy.deepcopy(room.players[id]))
+
+	stream.write('i',nr_of_bytes)
+
+	stream.write('i',len(players_to_send))
+	for p in players_to_send:
+		stream.write('iifi', p.id, p.team, p.time, len(p.objects))
+		for o in p.objects:
+			stream.write('iiifffff', o.unique, o.role, o.flavor, o.x, o.y, o.vx, o.vy, o.health)
+
 
 
 ###############################################################################################################################
@@ -59,7 +100,7 @@ def RegisterPlayer(stream):#read player id, writes 1(success) or 0(fail) or 2(ke
 	for i in range(10):
 		with players_lock:
 			if id in players:
-				player = players[id]
+				room_id = players[id].room_id
 				del players[id]
 				break
 		stream.write('i',2)
@@ -70,20 +111,25 @@ def RegisterPlayer(stream):#read player id, writes 1(success) or 0(fail) or 2(ke
 		return None
 
 	with rooms_lock:
-		if player.room_id in rooms:
-			room = rooms[player.room_id]
-			room.AddPlayer(player)
+		if room_id in rooms:
+			room = rooms[room_id]
+			player = room.NewPlayer()
 		else:
+			stream.write('i',0)
 			raise Exception("The room was disbanded before the player could join.")
+			return None
+	try:
+		stream.write('i',1)
 
-	stream.write('i',1)
-
-	(sync_request,) = stream.read('i')
-	if sync_request == 1:
-		Synchronize(stream,player,room)
-	else:
-		raise Exception("Player failed to send a synchronize request.")
-		return None
+		(sync_request,) = stream.read('i')
+		if sync_request == 1:
+			Synchronize(stream,player,room)
+		else:
+			raise Exception("Player failed to send a synchronize request.")
+			return None
+	except:
+		#if an error happenede there, then remove the player from game room
+		room.RemovePlayer(player)
 
 	return (player,room)
 
@@ -92,6 +138,9 @@ MessageHandler = {#reads, returns:
 	0:MessageDone,#nothing
 	1:Synchronize,#write f time
 	2:GetID,#write i player.id
+	3:ReceivePlayerState,#complicated, see implementation
+	4:SendGameState,#complicated, see implementation
+
 
 }
 ###############################################################################################################################
@@ -114,6 +163,8 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 			print("A player has been lost, the error was:",str(error))
 			PlayerLost(player,room)
 		finally:
+			if room:
+				room.RemovePlayer(player)
 			stream.close()
 			print ("Ended connection from {}:{}".format(self.client_address[0],self.client_address[1]))
 			
@@ -142,14 +193,13 @@ def IncomingPlayer(stream):
 	print("Incoming player:",player_id,"in room:",room_id)
 	with players_lock:
 		if player_id not in players:
-			players[player_id] = Player(player_id)
+			players[player_id] = Incoming(player_id,room_id)
 		players[player_id].room_id = room_id
 
 		with rooms_lock:
 			if room_id not in rooms:
 				#create a new room and stuff
 				rooms[room_id] = GameRoom()
-				#todo
 	
 
 ###############################################################################################################################

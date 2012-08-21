@@ -143,7 +143,7 @@
 			}
 		}
 		
-		public function AddPlayer(pos:Point, flavor:String):Player
+		public function AddPlayer(pos:Point, flavor:String, id:int = 0, unique:int = 0):Player
 		{
 			var body:b2Body;
 			var bodyDef:b2BodyDef;
@@ -301,13 +301,13 @@
 				default:
 				trace("No player of type: "+flavor);
 			}
-			body.SetUserData(new Player(body,flavor,game));
+			body.SetUserData(new Player(body,flavor,id,unique,game));
 			update_list[body] = body.GetUserData().sprite;
 			game.player_list[body] = body.GetUserData();
 			return body.GetUserData();
 			
 		}
-		public function AddProjectile(pos:Point, vel:Point, flavor:String,id:uint):Projectile{
+		public function AddProjectile(pos:Point, vel:Point, flavor:String,id:int = 0, unique:int = 0):Projectile{
 			var body:b2Body;
 			var bodyDef:b2BodyDef;
 			var fixtureDef:b2FixtureDef;
@@ -353,7 +353,7 @@
 				default:
 				trace("Box2d:No projectile of type: "+flavor);
 			}
-			body.SetUserData(new Projectile(body,flavor,game,id));
+			body.SetUserData(new Projectile(body,flavor,id,unique,game));
 			update_list[body] = body.GetUserData().sprite;
 			game.projectile_list[body] = body.GetUserData();
 			return body.GetUserData();
@@ -455,7 +455,6 @@
 			var fixture_hit:b2Fixture;
 			for(body in game.projectile_list){
 				if(game.projectile_list[body]){
-					body.GetUserData().time += timeStep;
 					contactEdge = body.GetContactList();
 					while(contactEdge){
 						contact = contactEdge.contact;
@@ -466,7 +465,7 @@
 								fixture_hit = contact.GetFixtureB();
 							}
 							if(!fixture_hit.IsSensor()){
-								body.GetUserData().hits++;
+								body.GetUserData().WallHit();
 							}
 						}
 						contactEdge = contactEdge.next;
@@ -494,6 +493,12 @@
 			}
 		}
 		//end update
+		//helper functions
+		public function ChangePositionAndSpeed(body:b2Body, x:Number, y:Number, vx:Number, vy:Number){
+			body.SetPosition(new b2Vec2(x,y));
+			body.SetLinearVelocity(new b2Vec2(vx,vy));
+		}
+		//end helper functions
 	}
 	//end class
 }

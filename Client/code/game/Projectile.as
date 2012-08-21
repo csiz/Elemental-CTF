@@ -10,21 +10,21 @@
 		public var role:String;
 		public var team:String;
 		public var sprite:MovieClip;
-		public var hits:int;
+		public var health:Number;
 		public var attack:Number;
-		public var time:Number;
-		public var id:uint;
-		public var unique:uint;
+		public var id:int;
+		public var unique:int;
+		public var alive:Boolean;
 		
-		public function Projectile(body:b2Body, flavor:String, game:Game, id:uint){
+		public function Projectile(body:b2Body, flavor:String, id:int, unique:int, game:Game){
 			this.flavor = flavor;
 			this.body = body;
 			this.game = game;
 			role = "projectile";
-			hits = 0;
-			time = 0;
+			health = 0;
+			alive = true;
 			this.id = id;
-			unique = 0;
+			this.unique = unique;
 			
 			switch(flavor){
 				case "projectile fire":
@@ -53,16 +53,27 @@
 		public function Update(timeStep:Number){
 			switch(flavor){
 				case "projectile fire":
-				if(hits > 3){
+				if(health > 3){
 					Remove();
 				}
 				//make it float:
 				body.ApplyForce(new b2Vec2(0,-30 * body.GetMass()), new b2Vec2(0,0));
 				break;
 				case "projectile water":
-				if(time > 2000){
+				health += timeStep;
+				if(health > 2000){
 					Remove();
 				}
+				break;
+			}
+		}
+		public function WallHit(){
+			switch(flavor){
+				case "projectile fire":
+				health++;
+				break;
+				case "projectile water":
+				//nothing
 				break;
 			}
 		}

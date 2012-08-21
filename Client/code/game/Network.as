@@ -4,9 +4,14 @@
 	import flash.utils.ByteArray;
 	import flash.net.Socket;
 	import flash.utils.getTimer;
+	import code.Utils;
+	import flash.geom.Point;
+
+	//Object has body,id,role,unique
+
 
 	public class Network{
-		public var id:uint;
+		public var id:int;
 		public var game:Game;
 		public var objects:Dictionary;
 		public var water_flag:Flag;
@@ -15,6 +20,11 @@
 		public var connection:Connection;
 		public var functions:Array;
 		public var ready:Boolean;
+		public var running:Boolean;
+		
+		public var team_map:Dictionary;
+		public var role_map:Dictionary;
+		public var flavor_map:Dictionary;
 		
 		public var reference_time:Number;
 		
@@ -23,6 +33,40 @@
 		}
 		
 		public function Network(){
+			team_map = new Dictionary();
+			team_map["fire"] = 1;
+			team_map["water"] = 2;
+			team_map[1] = "fire";
+			team_map[2] = "water";
+			
+			role_map = new Dictionary();
+			role_map["player"] = 1;
+			role_map["projectile"] = 2;
+			role_map["flag"] = 3;
+			role_map[1] = "player";
+			role_map[2] = "projectile";
+			role_map[3] = "flag";
+			
+			flavor_map = new Dictionary();
+			flavor_map["flag fire"] = 1;
+			flavor_map["flag water"] = 2;
+			flavor_map["ranged fire"] = 3;
+			flavor_map["ranged water"] = 4;
+			flavor_map["projectile fire"] = 5;
+			flavor_map["projectile water"] = 6;
+			flavor_map["melee fire"] = 7;
+			flavor_map["melee water"] = 8;
+			flavor_map[1] = "flag fire";
+			flavor_map[2] = "flag water";
+			flavor_map[3] = "ranged fire";
+			flavor_map[4] = "ranged water";
+			flavor_map[5] = "projectile fire";
+			flavor_map[6] = "projectile water";
+			flavor_map[7] = "melee fire";
+			flavor_map[8] = "melee water";
+			
+			
+			
 			functions = new Array();
 			ready = false;
 			reference_time = 0;
@@ -75,14 +119,9 @@
 								wait_for_1_or_retry(socket);
 						  	});
 		}
-		public function Start(game:Game){
-			this.game = game;
-			objects = new Dictionary(true);
-			game.id = id;
-			trace("Network: todo");
-		}
-		public function Random():uint{
-			return Math.floor( Math.random() * (uint.MAX_VALUE - uint.MIN_VALUE) + uint.MIN_VALUE );
+		
+		public function Random():int{
+			return Math.floor( Math.random() * (int.MAX_VALUE));
 		}
 		public function OnReady(f:Function){
 			functions.push(f);
@@ -96,18 +135,7 @@
 				functions.shift()();
 			}
 		}
-//The functions that add and remove things......................................................
-		public function Remove(unique:uint){
-			if(objects[unique]){
-				delete objects[unique];
-			}
-		}
-		public function Add(object:*){
-			do{
-				object.unique = Random();
-			}while(objects[object.unique]);
-			objects[object.unique] = object;
-		}
+
 		public function AddUser(me:Player){
 			this.me = me;
 			me.id = game.id;
@@ -122,19 +150,158 @@
 			}
 			
 		}
+//The functions that add and remove things......................................................
+		
+		public function Attack(attacker_id:int, receiver_id:int, unique:int, damage:Number){
+			//todo
+		}
+		public function Kill(attacker_id:int, receiver_id:int, unique:int){
+			//todo
+		}
+		public function Remove(unique:int){
+			if(objects[unique]){
+				delete objects[unique];
+			}
+			//todo
+		}
+		public function Add(object:*){
+			if(!object.unique){
+				do{
+					object.unique = Random();
+				}while(objects[object.unique]);
+			}
+			objects[object.unique] = object;
+			//todo
+		}
+		public function Action(id:int){
+			
+		}
 //End functions that add and remove things......................................................
 //Actions ......................................................................................	
-		public function Send(id:uint){
+		public function Send(player:*, socket:Socket){
+			var obj:*;
+			var counter = 0;
+			for(obj in objects){
+				if(objects[obj]){
+					if(objects[obj].id == player.id){
+						counter ++;
+					}
+				}
+			}
+			socket.writeInt(player.id);
+			socket.writeInt(team_map[player.team]);
+			socket.writeFloat(Time());
+			socket.writeInt(counter);
+			
+			for(obj in objects){
+				if(objects[obj]){
+					if(objects[obj].id == player.id){
+						socket.writeInt(objects[obj].unique);
+						socket.writeInt(role_map[objects[obj].role]);
+						socket.writeInt(flavor_map[objects[obj].flavor]);
+						socket.writeFloat(objects[obj].body.GetPosition().x);
+						socket.writeFloat(objects[obj].body.GetPosition().y);
+						socket.writeFloat(objects[obj].body.GetLinearVelocity().x);
+						socket.writeFloat(objects[obj].body.GetLinearVelocity().y);
+						socket.writeFloat(objects[obj].health);
+					}
+				}
+			}
+			trace("Sent data of player",player.id);
+		}
+		public function Get(socket:Socket){
 			var obj:*;
 			for(obj in objects){
 				if(objects[obj]){
-					if(objects[obj].id == id){
-						//todo
+					if(objects[obj].id != me.id){
+						objects[obj].health = int.MIN_VALUE;//mark everything with minumum health
+					}
+				}
+			}
+			
+			var number_of_players = socket.readInt();
+			for(;number_of_players > 0;number_of_players --){
+				var player_id = socket.readInt();
+				var player_team = team_map[socket.readInt()];
+				var time_of_update = socket.readFloat();
+				var counter = socket.readInt();
+				//todo maybe do something here too
+				for(;counter > 0;counter --){
+					var unique = socket.readInt();
+					var role = role_map[socket.readInt()];
+					var flavor = flavor_map[socket.readInt()];
+					var x = socket.readFloat();
+					var y = socket.readFloat();
+					var vx = socket.readFloat();
+					var vy = socket.readFloat();
+					var health = socket.readFloat();
+					
+					var delay = Time() - time_of_update;
+					
+					x += vx * delay;
+					y += vy * delay;
+					
+					if(objects[unique]){//if it exists in the list
+						obj = objects[unique];//easy access
+						//check for consistency
+						if( (obj.role == role) && (obj.flavor == flavor) && (obj.id == player_id) && (obj.team == player_team))
+						{//everything is alright, continue
+							obj.health = health;
+							game.box2d.ChangePositionAndSpeed(obj.body,x,y,vx,vy);
+						}else{//collision happened, stuff is weird here
+							trace("Network: you basically won the lottery.");
+						}
+					}else{//create it otherwise
+						obj = game.Add(role,flavor,x,y,vx,vy,player_id, unique, player_team);
+						obj.health = health;
+						game.box2d.ChangePositionAndSpeed(obj.body,x,y,vx,vy);
+					}
+					
+				}
+				trace("Received data from player",player_id);
+			}
+			for(obj in objects){
+				if(objects[obj]){
+					if(objects[obj].id != me.id){
+						if(objects[obj].health == int.MIN_VALUE){
+							//if its still marked (hasn't been updated by previous code) remove
+							objects[obj].Remove();
+						}
 					}
 				}
 			}
 		}
-
+		public function Start(game:Game){
+			this.game = game;
+			objects = new Dictionary(true);
+			game.id = id;
+			running = true;
+			StateLoop();
+		}
+		public function Step(){
+			connection.Add (function(socket:Socket)
+							{
+							 	socket.writeInt(3);
+								Send(me,socket);
+					  		},0,Connection.Nothing);
+		}
+		public function StateLoop(){
+			connection.Add (function(socket:Socket)
+							{
+							 	socket.writeInt(4);
+					  		},4,function(socket:Socket){
+								connection.Continue(Connection.Nothing,socket.readInt(),function(socket:Socket){
+														Get(socket);
+														if(running){
+															StateLoop();
+														}
+													});
+							});
+		}
+		public function Stop(){
+			running = false;
+			//todo
+		}
 //End actions ..................................................................................
 	}
 }

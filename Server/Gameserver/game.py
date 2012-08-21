@@ -1,26 +1,44 @@
 import threading
 import time
 
-class Point:
-	def __init__(self,x=0,y=0):
-		self.x = x
-		self.y = y
 
 class Player:
 	def __init__(self,id):
 		self.id = id
-		self.room_id = None
-		self.points = 0
 
 		#state information
-		self.position = Point()
-		self.projectiles = {}
+		self.team = 0;
+		self.time = 0 #time of update
+		self.objects = []
+		#incoming information
+		self.actions = []
+		self.damage = []
 
-class Projectile:
-	position = Point()
+class Object:
+	def __init__(self,unique,role,flavor,x,y,vx,vy,hp):
+		self.unique = unique
+		self.role = role
+		self.flavor = flavor
+		self.x = x
+		self.y = y
+		self.vx = vx
+		self.vy = vy
+		self.health = hp
 
-class Flag:
-	position = Point()
+class Action:
+	def __init__(self,id,time):
+		self.id = id
+		self.time = time
+
+class Damage:
+	def __init__(self,id,time,ammount):
+		self.id = id
+		self.time = time
+		self.ammount = ammount
+
+
+
+
 
 
 
@@ -28,21 +46,27 @@ class Flag:
 class GameRoom:
 	#todo
 	def __init__(self):
+		#state
 		self.players = {}
 		self.flags = {
-			"fire":Flag(),
-			"water":Flag()
+			"fire":Object(1,"flag","flag fire",0,0,0,0,0),
+			"water":Object(2,"flag","flag water",0,0,0,0,0)
 		}
+
 		self.time = time.time()
 		self.id_count = 1
-
 		self.lock = threading.RLock()
+		print("Created a new room.")
 
-		print("Created a new room")
-
-	def AddPlayer(self,player):
+	def NewPlayer(self):
 		with self.lock:
-			player.id = self.id_count
+			player = Player(self.id_count)
 			self.id_count += 1
 			self.players[player.id] = player
+			return player
+
+	def RemovePlayer(self,player):
+		with self.lock:
+			del self.players[player.id]
+
 

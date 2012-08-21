@@ -94,12 +94,26 @@
 			speed = 0.03;//ranged
 			//speed = 0.07;//melee
 			
-			box2d.AddPlayer(new Point(3,3), "melee fire");
-			box2d.AddPlayer(levels.GetSpawn(0,"team water"), "melee water");
+			//box2d.AddPlayer(new Point(3,3), "melee fire");
+			//box2d.AddPlayer(levels.GetSpawn(0,"team water"), "melee water");
 			box2d.AddFlag(levels.GetSpawn(0,"water flag"),"water");
 			box2d.AddFlag(levels.GetSpawn(0,"fire flag"),"fire");
 			
 			time = getTimer();
+		}
+		public function Add(role:String, flavor:String, x:Number, y:Number, vx:Number, vy:Number, id:int, unique:int, team:String){
+			//when adding new types, you have to modify 3 things:
+			//in constructor at Player/Projectile make a case:whatever fire...
+			//in Network at flavor_map
+			
+			switch (role){
+				case "player":
+				return box2d.AddPlayer(new Point(x,y), flavor, id, unique);
+				break;
+				case "projectile":
+				return box2d.AddProjectile(new Point(x,y), new Point(vx,vy),flavor,id,unique);
+				break;
+			}
 		}
 		
 		protected function GameLoop(event:Event):void
@@ -271,6 +285,9 @@
 				movie.x += ( ( ( 325  -me.sprite.x ) - (mouseX - 325)*0.5 ) - movie.x ) * speed;
 				movie.y += ( ( ( 200  -me.sprite.y ) - (mouseY - 200)*0.5 ) - movie.y ) * speed;
 			}
+			
+			//Network
+			network.Step();
 			
 			//Message //testing
 			ui.message.text = (1000/timeStep).toFixed(2);

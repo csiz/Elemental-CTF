@@ -8,12 +8,22 @@
 		public var body:b2Body;
 		public var game:Game;
 		public var role:String;
+		public var flavor:String;
+		public var health:Number;
+		public var alive:Boolean;
+		public var unique:int;
+		public var id:int;
 		public var team:String;
 		public var sprite:MovieClip;
 		public var carry:Player;
 		public var origin:b2Vec2;
 		
 		public function Flag(body:b2Body,team:String, pos:Point, game:Game){
+			
+			health = 0;
+			alive = true;
+			id = 0;
+			
 			this.body = body;
 			this.game = game;
 			this.team = team;
@@ -26,9 +36,13 @@
 			switch(team){
 				case "fire":
 				sprite = new FlagFire();
+				unique = 1;
+				flavor = "flag fire";
 				break;
 				case "water":
 				sprite = new FlagWater();
+				unique = 2;
+				flavor = "flag water";
 				break;
 				default:
 				trace("wtf");
