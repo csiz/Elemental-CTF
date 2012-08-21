@@ -35,6 +35,8 @@ class GameRoom:
 	#todo
 	def __init__(self):
 		#state
+		self.state_number = 0
+		self.level = 0
 		self.players = {}
 		self.flags = {
 			"fire":Object(1,"flag","flag fire",0,0,0,0,0),

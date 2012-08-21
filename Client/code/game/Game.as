@@ -27,6 +27,7 @@
 		//player data
 		public var me:Player;
 		public var id:int;
+		public var team:String;
 		public var player_list:Dictionary;
 		public var projectile_list:Dictionary;
 		public var flag_list:Dictionary;
@@ -41,7 +42,10 @@
 		public var mouse:Boolean;
 		public var control:String;
 		public var speed:Number;
-		
+		//other
+		public var running:Boolean;
+		public var state_number:int;
+		public var level:int;
 		
 		
 		public function Game(network:Network = null)
@@ -53,19 +57,11 @@
 			}
 			//init data:
 			id = 0;
-			
-			movie = new MovieClip();
-			addChild(movie);
-			
-			ui = new UI();
-			addChild(ui);
-			
-			player_list = new Dictionary(true);
-			projectile_list = new Dictionary(true);
-			flag_list = new Dictionary(true);
+			team = "neutral";
+			running = false;
 			
 			levels = new Levels();
-			box2d = new Box2d(levels,movie,this);
+			
 			//user interface vars
 			w = false;
 			a = false;
@@ -75,32 +71,53 @@
 			mouse = false;
 			control = "keyboard";
 			speed = 0.3;
+			
+			
+			
 		}
 		
 		public function Start(){
-			network.Start(this);
-			
-			//controls...
-            addEventListener(Event.ENTER_FRAME,GameLoop);
 			stage.addEventListener(KeyboardEvent.KEY_DOWN,KeyDown);
 			stage.addEventListener(KeyboardEvent.KEY_UP,KeyUp);
 			stage.addEventListener(MouseEvent.MOUSE_DOWN,MouseDown);
 			stage.addEventListener(MouseEvent.MOUSE_UP,MouseUp);
+			addEventListener(Event.ENTER_FRAME,GameLoop);
+			
+			network.Start(this);
+			network.Load();
+		}
+		
+		public function Reload(){
+			//first we clear everything
+			removeChildren();
+			//then we put everything back
+			movie = new MovieClip();
+			addChild(movie);
+			
+			ui = new UI();
+			addChild(ui);
+			
+			player_list = new Dictionary(true);
+			projectile_list = new Dictionary(true);
+			flag_list = new Dictionary(true);
+			box2d = new Box2d(levels,movie,this);
+
 			
 			
-			box2d.LoadLevel(0);
-			me = box2d.AddPlayer(levels.GetSpawn(0,"team fire"), "ranged fire");
+			
+			box2d.LoadLevel(level);
+			box2d.AddFlag(levels.GetSpawn(level,"water flag"),"water");
+			box2d.AddFlag(levels.GetSpawn(level,"fire flag"),"fire");
+			
+			me = box2d.AddPlayer(levels.GetSpawn(level,"team water"), "ranged water");
 			network.AddUser(me);
 			speed = 0.03;//ranged
 			//speed = 0.07;//melee
-			
-			//box2d.AddPlayer(new Point(3,3), "melee fire");
-			//box2d.AddPlayer(levels.GetSpawn(0,"team water"), "melee water");
-			box2d.AddFlag(levels.GetSpawn(0,"water flag"),"water");
-			box2d.AddFlag(levels.GetSpawn(0,"fire flag"),"fire");
-			
 			time = getTimer();
+			running = true;
 		}
+		
+		
 		public function Add(role:String, flavor:String, x:Number, y:Number, vx:Number, vy:Number, id:int, unique:int, team:String){
 			//when adding new types, you have to modify 3 things:
 			//in constructor at Player/Projectile make a case:whatever fire...
@@ -112,6 +129,7 @@
 				break;
 				case "projectile":
 				return box2d.AddProjectile(new Point(x,y), new Point(vx,vy),flavor,id,unique);
+				
 				break;
 			}
 		}
@@ -124,9 +142,16 @@
 			}
 			box2d.ChangePositionAndSpeed(obj.body,x,y,vx,vy);
 		}
+		public function AnimateAction(id:int,elapsed_time:Number){
+			trace("received action from player",id,"that happened",elapsed_time,"seconds ago");
+			//todo animations
+		}
 		
 		protected function GameLoop(event:Event):void
         {	
+			if(!running){
+				return;
+			}
 			//controls
 			var temp_x:Number;
 			var temp_y:Number;

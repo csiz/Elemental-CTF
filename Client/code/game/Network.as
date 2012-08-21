@@ -34,8 +34,10 @@
 		
 		public function Network(){
 			team_map = new Dictionary();
+			team_map["neutral"] = 0;
 			team_map["fire"] = 1;
 			team_map["water"] = 2;
+			team_map[0] = "neutral";
 			team_map[1] = "fire";
 			team_map[2] = "water";
 			
@@ -80,7 +82,7 @@
 			var wait_for_1_or_retry = function(socket:Socket){
 				var result = socket.readInt();
 				if(result == 1){//1 success, 2 keep listening, 0 fail
-					connection.Continue(function(socket:Socket)
+					connection.Add(function(socket:Socket)
 										{
 											socket.writeInt(1);
 											round_trip_time = (getTimer()*0.001);
@@ -139,6 +141,7 @@
 		public function AddUser(me:Player){
 			this.me = me;
 			me.id = game.id;
+			game.team = me.team;
 		}
 		public function AddFlag(flag:Flag){
 			if(flag.team == "fire"){
@@ -165,28 +168,36 @@
 			objects[object.unique] = object;
 		}
 		public function Action(id:int){
-			//todo
+			if(id == game.id){
+				var time_of_action = Time();
+				connection.Add (function(socket:Socket)
+								{
+									socket.writeInt(5);
+									socket.writeFloat(time_of_action);
+								},0,Connection.Nothing);
+			}
 		}
 //End functions that add and remove things......................................................
 //Actions ......................................................................................	
-		public function Send(player:*, socket:Socket){
+		public function Send(id:int,team:String, socket:Socket){
 			var obj:*;
 			var counter = 0;
 			for(obj in objects){
 				if(objects[obj]){
-					if(objects[obj].id == player.id){
+					if(objects[obj].id == id){
 						counter ++;
 					}
 				}
 			}
-			socket.writeInt(player.id);
-			socket.writeInt(team_map[player.team]);
+			socket.writeInt(game.state_number);
+			socket.writeInt(id);
+			socket.writeInt(team_map[team]);
 			socket.writeFloat(Time());
 			socket.writeInt(counter);
 			
 			for(obj in objects){
 				if(objects[obj]){
-					if(objects[obj].id == player.id){
+					if(objects[obj].id == id){
 						socket.writeInt(objects[obj].unique);
 						socket.writeInt(role_map[objects[obj].role]);
 						socket.writeInt(flavor_map[objects[obj].flavor]);
@@ -200,6 +211,21 @@
 			}
 		}
 		public function Get(socket:Socket){
+			var state_number = socket.readInt();
+			var number_of_actions = socket.readInt();
+			var number_of_players = socket.readInt();
+			
+			if(game.state_number != state_number){
+				Load();
+			}
+			
+			//read and process the actions
+			for(;number_of_actions > 0; number_of_actions--){
+				var id = socket.readInt();
+				var time = socket.readFloat();
+				game.AnimateAction(id,Time()-time);
+			}
+			//read and process the players
 			var obj:*;
 			for(obj in objects){
 				if(objects[obj]){
@@ -208,15 +234,12 @@
 					}
 				}
 			}
-			
-			var number_of_players = socket.readInt();
-			for(;number_of_players > 0;number_of_players --){
+
+			for(;number_of_players > 0;number_of_players--){
 				var player_id = socket.readInt();
 				var player_team = team_map[socket.readInt()];
 				var time_of_update = socket.readFloat();
 				var counter = socket.readInt();
-				//todo maybe do something here too
-				//implement a game state number, when the numbers differ, it mean i have to request the lvl and stuff
 				for(;counter > 0;counter --){
 					var unique = socket.readInt();
 					var role = role_map[socket.readInt()];
@@ -258,36 +281,53 @@
 				}
 			}
 		}
+
 		public function Start(game:Game){
 			this.game = game;
-			objects = new Dictionary(true);
 			game.id = id;
-			running = true;
-			StateLoop();
+		}
+		
+		public function Load(){
+			running = false;
+			game.running = false;
+			
+			connection.Add (function(socket:Socket)
+							{
+							 	socket.writeInt(7);
+					  		},8,function(socket:Socket)
+							{
+							 	game.state_number = socket.readInt();
+								game.level = socket.readInt();
+								objects = new Dictionary(true);
+								me = null;
+								running = true;
+								game.Reload();
+								StateLoop(game.state_number);
+					  		});
 		}
 		public function Step(){
 			connection.Add (function(socket:Socket)
 							{
 							 	socket.writeInt(3);
-								Send(me,socket);
+								Send(game.id,game.team,socket);
 					  		},0,Connection.Nothing);
 		}
-		public function StateLoop(){
+		public function StateLoop(state_number:int){
 			connection.Add (function(socket:Socket)
 							{
 							 	socket.writeInt(4);
 					  		},4,function(socket:Socket){
 								connection.Continue(Connection.Nothing,socket.readInt(),function(socket:Socket){
 														Get(socket);
-														if(running){
-															StateLoop();
+														if(running && (game.state_number == state_number)){
+															StateLoop(state_number);
 														}
 													});
 							});
 		}
 		public function Stop(){
 			running = false;
-			//todo
+			connection.Add (function(socket:Socket){socket.writeInt(0);},0,Connection.Nothing);
 		}
 //End actions ..................................................................................
 	}

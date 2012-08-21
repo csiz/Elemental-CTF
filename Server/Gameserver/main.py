@@ -54,10 +54,10 @@ def GetID(stream,player,room):
 	stream.write('i',player.id)
 
 def ReceivePlayerState(stream,player,room):
-	(id,team,time,count) = stream.read('iifi')
+	(state_number,id,team,time,count) = stream.read('iiifi')
 
-	if not id == player.id:
-		pass
+	if id != player.id:
+		raise Exception("Haven't requested the information of another player.")
 		#todo, receiving information about another player for cheat/sync check
 
 	objects = []
@@ -66,13 +66,15 @@ def ReceivePlayerState(stream,player,room):
 		objects.append(Object(unique,role,flavor,x,y,vx,vy,hp))
 
 	with room.lock:
-		player.team = team
-		player.time = time
-		player.objects = objects
+		if room.state_number == state_number:
+			player.team = team
+			player.time = time
+			player.objects = objects
+		#otherwise, casually discard data
 
 
 def SendGameState(stream,player,room):
-	nr_of_bytes = 4
+	nr_of_bytes = 12
 	players_to_send = []
 
 	with room.lock:
@@ -81,9 +83,20 @@ def SendGameState(stream,player,room):
 				nr_of_bytes += 16 + ( 32 * len(room.players[id].objects) )
 				players_to_send.append(copy.deepcopy(room.players[id]))
 
+		actions_to_send = player.actions
+		player.actions = []
+
+		state_number = room.state_number
+
+	nr_of_bytes += 8 * len(actions_to_send)
+
 	stream.write('i',nr_of_bytes)
 
-	stream.write('i',len(players_to_send))
+	stream.write('iii',state_number,len(actions_to_send),len(players_to_send))
+
+	for a in actions_to_send:
+		stream.write('if',a.id,a.time)
+	
 	for p in players_to_send:
 		stream.write('iifi', p.id, p.team, p.time, len(p.objects))
 		for o in p.objects:
@@ -93,17 +106,16 @@ def ReceiveAction(stream,player,room):
 	(time,) = stream.read('f')
 	with room.lock:
 		for id in room.players:
-			rooms.players[id].actions.append(Action(player.id,time))
+			if id != player.id:
+				room.players[id].actions.append(Action(player.id,time))
 
-def SendActions(stream,player,room):
+
+def SendGameOverview(stream,player,room):
 	with room.lock:
-		actions = player.actions
-		player.actions = []
+		state_number = room.state_number
+		level = room.level
 
-
-	stream.write('i',len(actions))
-	for a in actions:
-		stream.write('if',a.id,a.time)
+	stream.write('ii',state_number,level)
 
 
 ###############################################################################################################################
@@ -155,6 +167,8 @@ MessageHandler = {#reads, returns:
 	2:GetID,#write i player.id
 	3:ReceivePlayerState,#complicated, see implementation
 	4:SendGameState,#complicated, see implementation
+	5:ReceiveAction,#read float
+	7:SendGameOverview,#writes 'ii' (state number and level)
 
 
 }

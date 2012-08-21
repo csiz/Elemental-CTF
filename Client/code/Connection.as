@@ -99,6 +99,9 @@
 			process();
 		}
 		public function Continue(write:Function, size:Number, read:Function){
+			if((write != Nothing) && readQueue.length){
+				throw ("A Connection.Continue function has been called out of order.");
+			}
 			writeQueue.unshift(write);
 			readQueue.unshift(read);
 			expectQueue.unshift(size);
