@@ -54,13 +54,30 @@
 		public function Pick(carry:Player){
 			this.carry = carry;
 			carry.flag = this;
+			game.network.PickFlag(this);
+		}
+		public function NetworkUpdate(obj:*,x:Number,y:Number){
+			if(carry){
+				carry.flag = null;
+				carry = null;
+			}
+			if(obj == null){
+				body.SetPosition(new b2Vec2(x,y));
+			}else{
+				this.carry = obj;
+				obj.flag = this;
+			}
 		}
 		public function Drop(){
-			carry.flag = null;
-			carry = null;
+			if(carry){
+				carry.flag = null;
+				carry = null;
+			}
+			game.network.DropFlag(this);
 		}
 		public function Reset(){
 			body.SetPosition(origin);
+			game.network.ResetFlag(this);
 		}
 	}
 }

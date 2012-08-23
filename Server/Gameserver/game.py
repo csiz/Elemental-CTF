@@ -39,9 +39,9 @@ class GameRoom:
 		self.level = 0
 		self.players = {}
 		self.flags = {
-			"fire":Object(1,"flag","flag fire",0,0,0,0,0),
-			"water":Object(2,"flag","flag water",0,0,0,0,0)
-		}
+			1:Object(0,None,None,0,0,None,None,None),#fire flag
+			2:Object(0,None,None,0,0,None,None,None)#water flag
+		}#unique is the carrier or 0 if its origin or -1 if its floating, x and y are the positions if its floating
 
 		self.time = time.time()
 		self.id_count = 1

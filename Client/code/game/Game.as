@@ -102,17 +102,18 @@
 			flag_list = new Dictionary(true);
 			box2d = new Box2d(levels,movie,this);
 
-			
-			
-			
 			box2d.LoadLevel(level);
 			box2d.AddFlag(levels.GetSpawn(level,"water flag"),"water");
 			box2d.AddFlag(levels.GetSpawn(level,"fire flag"),"fire");
 			
+			
+			//todo v
 			me = box2d.AddPlayer(levels.GetSpawn(level,"team water"), "ranged water");
 			network.AddUser(me);
 			speed = 0.03;//ranged
 			//speed = 0.07;//melee
+			//todo ^
+			
 			time = getTimer();
 			running = true;
 		}
@@ -129,7 +130,6 @@
 				break;
 				case "projectile":
 				return box2d.AddProjectile(new Point(x,y), new Point(vx,vy),flavor,id,unique);
-				
 				break;
 			}
 		}

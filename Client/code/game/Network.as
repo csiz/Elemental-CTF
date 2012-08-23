@@ -68,7 +68,6 @@
 			flavor_map[8] = "melee water";
 			
 			
-			
 			functions = new Array();
 			ready = false;
 			reference_time = 0;
@@ -123,7 +122,7 @@
 		}
 		
 		public function Random():int{
-			return Math.floor( Math.random() * (int.MAX_VALUE));
+			return Math.floor( Math.random() * (int.MAX_VALUE-1) + 1);
 		}
 		public function OnReady(f:Function){
 			functions.push(f);
@@ -210,6 +209,7 @@
 				}
 			}
 		}
+		
 		public function Get(socket:Socket){
 			var state_number = socket.readInt();
 			var number_of_actions = socket.readInt();
@@ -280,8 +280,69 @@
 					}
 				}
 			}
+			//read and process the flags
+			var flag_x,flag_y,flag_carry;
+			//fire flag first
+			flag_x = socket.readFloat();
+			flag_y = socket.readFloat();
+			flag_carry = socket.readInt();
+			if((!(objects[flag_carry])) && flag_carry){
+				flag_carry = -1;
+			}
+			if(flag_carry == 0){
+				fire_flag.NetworkUpdate(null,fire_flag.origin.x,fire_flag.origin.y);
+			}else if(flag_carry == -1){
+				fire_flag.NetworkUpdate(null,flag_x,flag_y);
+			}else{
+				fire_flag.NetworkUpdate(objects[flag_carry],flag_x,flag_y);
+			}
+			//water flag second
+			flag_x = socket.readFloat();
+			flag_y = socket.readFloat();
+			flag_carry = socket.readInt();
+			if((!(objects[flag_carry])) && flag_carry){
+				flag_carry = -1;
+			}
+			if(flag_carry == 0){
+				water_flag.NetworkUpdate(null,water_flag.origin.x,water_flag.origin.y);
+			}else if(flag_carry == -1){
+				water_flag.NetworkUpdate(null,flag_x,flag_y);
+			}else{
+				water_flag.NetworkUpdate(objects[flag_carry],flag_x,flag_y);
+			}
+			
 		}
-
+		public function DropFlag(flag:Flag){
+			connection.Add (function(socket:Socket)
+							{
+							 	socket.writeInt(8);
+								socket.writeInt(team_map[flag.team]);
+								socket.writeFloat(flag.body.GetPosition().x);
+								socket.writeFloat(flag.body.GetPosition().y);
+								socket.writeInt(-1);
+					  		},0,Connection.Nothing);
+		}
+		public function PickFlag(flag:Flag){
+			var carry = flag.carry;
+			connection.Add (function(socket:Socket)
+							{
+							 	socket.writeInt(8);
+								socket.writeInt(team_map[flag.team]);
+								socket.writeFloat(flag.body.GetPosition().x);
+								socket.writeFloat(flag.body.GetPosition().y);
+								socket.writeInt(carry.unique);
+					  		},0,Connection.Nothing);
+		}
+		public function ResetFlag(flag:Flag){
+			connection.Add (function(socket:Socket)
+							{
+							 	socket.writeInt(8);
+								socket.writeInt(team_map[flag.team]);
+								socket.writeFloat(flag.body.GetPosition().x);
+								socket.writeFloat(flag.body.GetPosition().y);
+								socket.writeInt(0);
+					  		},0,Connection.Nothing);
+		}
 		public function Start(game:Game){
 			this.game = game;
 			game.id = id;

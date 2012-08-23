@@ -231,6 +231,9 @@
 			}
 		}
 		public function Remove(){
+			if(flag){
+				flag.Drop();
+			}
 			game.movie.removeChild(sprite);
 			game.box2d.m_world.DestroyBody(body);
 			delete game.box2d.update_list[body];
@@ -244,9 +247,7 @@
 			}
 		}
 		public function Kill(){
-			if(flag){
-				flag.Drop();
-			}
+			
 			alive = false;
 			Remove();
 		}

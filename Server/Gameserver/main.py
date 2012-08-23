@@ -74,7 +74,7 @@ def ReceivePlayerState(stream,player,room):
 
 
 def SendGameState(stream,player,room):
-	nr_of_bytes = 12
+	nr_of_bytes = 12 + 24
 	players_to_send = []
 
 	with room.lock:
@@ -85,6 +85,8 @@ def SendGameState(stream,player,room):
 
 		actions_to_send = player.actions
 		player.actions = []
+
+		flags = copy.deepcopy(room.flags)
 
 		state_number = room.state_number
 
@@ -102,6 +104,10 @@ def SendGameState(stream,player,room):
 		for o in p.objects:
 			stream.write('iiifffff', o.unique, o.role, o.flavor, o.x, o.y, o.vx, o.vy, o.health)
 
+	for f in flags:
+		stream.write('ffi',flags[f].x,flags[f].y,flags[f].unique)
+
+
 def ReceiveAction(stream,player,room):
 	(time,) = stream.read('f')
 	with room.lock:
@@ -116,6 +122,13 @@ def SendGameOverview(stream,player,room):
 		level = room.level
 
 	stream.write('ii',state_number,level)
+
+def ReceiveFlagState(stream,player,room):
+	(flag,x,y,unique) = stream.read('iffi')
+	with room.lock:
+		room.flags[flag].unique = unique
+		room.flags[flag].x = x
+		room.flags[flag].y = y
 
 
 ###############################################################################################################################
@@ -169,6 +182,7 @@ MessageHandler = {#reads, returns:
 	4:SendGameState,#complicated, see implementation
 	5:ReceiveAction,#read float
 	7:SendGameOverview,#writes 'ii' (state number and level)
+	8:ReceiveFlagState,#reads flag,x,y, unique
 
 
 }
