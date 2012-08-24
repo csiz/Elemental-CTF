@@ -62,12 +62,12 @@
 			{
 				for(var x = 0;x < levels.level[lvl].width;x++)
 				{
-					var yes:Boolean = true;
 					//general
 					bodyDef = new b2BodyDef();
 					bodyDef.position.Set(x, y);
 					boxDef = new b2FixtureDef();
 					boxDef.density = 0;
+					boxDef.userData = new Object();
 					bodyDef.type = b2Body.b2_staticBody;
 					//properties
 					switch ( levels.GetType(lvl, x, y) )
@@ -76,19 +76,43 @@
 						boxDef.friction = 0.3;
 						boxDef.restitution = 0;
 						bodyDef.userData = new Brick();
+						boxDef.userData.role = "brick";
+						boxDef.userData.flavor = "normal";
 						break;
 						//end brick
 						case "bouncy":
 						boxDef.friction = 0.3;
 						boxDef.restitution = 0.5;
 						bodyDef.userData = new Bouncy();
+						boxDef.userData.role = "brick";
+						boxDef.userData.flavor = "bouncy";
 						break;
 						//end bouncy
+						case "ice":
+						boxDef.friction = 0.1;
+						boxDef.restitution = 0;
+						bodyDef.userData = new Ice();
+						boxDef.userData.role = "brick";
+						boxDef.userData.flavor = "ice";
+						break;
+						//end ice
+						case "lava":
+						boxDef.friction = 0.7;
+						boxDef.restitution = 0;
+						bodyDef.userData = new Lava();
+						boxDef.userData.role = "brick";
+						boxDef.userData.flavor = "lava";
+						break;
+						//end lava
 						default:
-						yes = false;
 						break;
 					}
-					if(yes){//did we find a brick?
+					switch ( levels.GetType(lvl, x, y) )
+					{
+						case "brick":
+						case "bouncy":
+						case "lava":
+						case "ice":
 						//shape
 						switch( levels.GetOrientation(lvl, x, y) )
 						{
@@ -98,7 +122,7 @@
 								 new b2Vec2(0.5,0.5),
 								 new b2Vec2(-0.5,0.5)],
 								 3);
-							boxDef.userData = {role:"brick NE"};
+							boxDef.userData.orientation = "NE";
 							bodyDef.userData.gotoAndStop("NE");
 							break;
 							case "SE":
@@ -107,6 +131,7 @@
 								 new b2Vec2(0.5,-0.5),
 								 new b2Vec2(-0.5,0.5)],
 								 3);
+							boxDef.userData.orientation = "SE";
 							bodyDef.userData.gotoAndStop("SE");
 							break;
 							case "NW":
@@ -115,7 +140,7 @@
 								 new b2Vec2(0.5,0.5),
 								 new b2Vec2(-0.5,0.5)],
 								 3);
-							boxDef.userData = {role:"brick NW"};
+							boxDef.userData.orientation = "NW";
 							bodyDef.userData.gotoAndStop("NW");
 							break;
 							case "SW":
@@ -124,10 +149,12 @@
 								 new b2Vec2(0.5,-0.5),
 								 new b2Vec2(0.5,0.5)],
 								 3);
+							boxDef.userData.orientation = "SW";
 							bodyDef.userData.gotoAndStop("SW");
 							break;
 							case "normal":
 							default:
+							boxDef.userData.orientation = "normal";
 							boxDef.shape = b2PolygonShape.AsBox(0.5, 0.5);
 							break;
 						}
@@ -138,7 +165,9 @@
 						//add it
 						body = m_world.CreateBody(bodyDef);
 						body.CreateFixture(boxDef);
+						break;
 					}
+					
 				}
 			}
 		}
@@ -417,11 +446,13 @@
 										body.SetLinearDamping(2);
 										contact.GetFixtureA().GetBody().GetUserData().airSince = 0;
 										if(contact.GetFixtureB().GetUserData()){
-											if(contact.GetFixtureB().GetUserData().role == "brick NE"){
-												contact.GetFixtureA().GetBody().GetUserData().NE = true;
-											}
-											if(contact.GetFixtureB().GetUserData().role == "brick NW"){
-												contact.GetFixtureA().GetBody().GetUserData().NW = true;
+											if(contact.GetFixtureB().GetUserData().role == "brick"){
+												if(contact.GetFixtureB().GetUserData().orientation == "NE"){
+													contact.GetFixtureA().GetBody().GetUserData().NE = true;
+												}
+												if(contact.GetFixtureB().GetUserData().orientation == "NW"){
+													contact.GetFixtureA().GetBody().GetUserData().NW = true;
+												}
 											}
 										}
 									}
@@ -435,11 +466,13 @@
 										body.SetLinearDamping(2);
 										contact.GetFixtureB().GetBody().GetUserData().airSince = 0;
 										if(contact.GetFixtureA().GetUserData()){
-											if(contact.GetFixtureA().GetUserData().role == "brick NE"){
-												contact.GetFixtureB().GetBody().GetUserData().NE = true;
-											}
-											if(contact.GetFixtureA().GetUserData().role == "brick NW"){
-												contact.GetFixtureB().GetBody().GetUserData().NW = true;
+											if(contact.GetFixtureA().GetUserData().role == "brick"){
+												if(contact.GetFixtureA().GetUserData().orientation == "NE"){
+													contact.GetFixtureB().GetBody().GetUserData().NE = true;
+												}
+												if(contact.GetFixtureA().GetUserData().orientation == "NW"){
+													contact.GetFixtureB().GetBody().GetUserData().NW = true;
+												}
 											}
 										}
 									}

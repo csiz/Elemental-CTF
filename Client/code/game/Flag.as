@@ -54,7 +54,7 @@
 		public function Pick(carry:Player){
 			this.carry = carry;
 			carry.flag = this;
-			game.network.PickFlag(this);
+			game.network.PickFlag(game.state_number,this);
 		}
 		public function NetworkUpdate(obj:*,x:Number,y:Number){
 			if(carry){
@@ -73,11 +73,11 @@
 				carry.flag = null;
 				carry = null;
 			}
-			game.network.DropFlag(this);
+			game.network.DropFlag(game.state_number,this);
 		}
 		public function Reset(){
 			body.SetPosition(origin);
-			game.network.ResetFlag(this);
+			game.network.ResetFlag(game.state_number,this);
 		}
 	}
 }

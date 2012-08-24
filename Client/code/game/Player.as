@@ -36,6 +36,8 @@
 		public var alive:Boolean;
 		public var regen:Number;
 		public var flag:Flag;
+		public var removed:Boolean;
+		public var hitTimer:Number;
 		
 		public function Player(body:b2Body, flavor:String, id:int, unique:int, game:Game)
 		{
@@ -43,6 +45,7 @@
 			this.unique = unique;
 			this.game = game;
 			flag = null;
+			removed = false;
 			
 			role = "player";
 			
@@ -54,6 +57,7 @@
 			airSince = 5000;
 			actionSince = 5000;
 			attackTimer = 0;
+			hitTimer = 0;
 			alive = true;
 			switch (flavor)
 			{
@@ -204,7 +208,7 @@
 				}
 				if(actionSince > cooldown){
 					actionSince = 0;
-					game.network.Action(this.id);
+					game.network.Action(game.state_number,this.id);
 					switch (flavor)
 					{
 						case "melee fire":
@@ -231,25 +235,34 @@
 			}
 		}
 		public function Remove(){
-			if(flag){
-				flag.Drop();
+			if(!removed){
+				if(flag){
+					flag.Drop();
+				}
+				game.movie.removeChild(sprite);
+				game.box2d.m_world.DestroyBody(body);
+				delete game.box2d.update_list[body];
+				delete game.player_list[body];
+				game.network.Remove(unique);
+				removed = true;
 			}
-			game.movie.removeChild(sprite);
-			game.box2d.m_world.DestroyBody(body);
-			delete game.box2d.update_list[body];
-			delete game.player_list[body];
-			game.network.Remove(unique);
 		}
 		public function Attack(damage:Number, id:int){
-			health -= damage;
-			if(health <= 0){
-				Kill();
+			if(hitTimer > 50){//to exclude double attacks and such, this may present some problems later
+				health -= damage;
+				if(health <= 0){
+					Kill();
+				}
 			}
 		}
 		public function Kill(){
-			
-			alive = false;
-			Remove();
+			if(alive){
+				if(flag){
+					flag.Drop();
+				}
+				alive = false;
+				Remove();
+			}
 		}
 	}
 }

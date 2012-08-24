@@ -166,19 +166,20 @@
 			}
 			objects[object.unique] = object;
 		}
-		public function Action(id:int){
+		public function Action(state_number:int,id:int){
 			if(id == game.id){
 				var time_of_action = Time();
 				connection.Add (function(socket:Socket)
 								{
 									socket.writeInt(5);
+									socket.writeInt(state_number);
 									socket.writeFloat(time_of_action);
 								},0,Connection.Nothing);
 			}
 		}
 //End functions that add and remove things......................................................
 //Actions ......................................................................................	
-		public function Send(id:int,team:String, socket:Socket){
+		public function Send(state_number:int, id:int,team:String, socket:Socket){
 			var obj:*;
 			var counter = 0;
 			for(obj in objects){
@@ -188,7 +189,7 @@
 					}
 				}
 			}
-			socket.writeInt(game.state_number);
+			socket.writeInt(state_number);
 			socket.writeInt(id);
 			socket.writeInt(team_map[team]);
 			socket.writeFloat(Time());
@@ -215,9 +216,6 @@
 			var number_of_actions = socket.readInt();
 			var number_of_players = socket.readInt();
 			
-			if(game.state_number != state_number){
-				Load();
-			}
 			
 			//read and process the actions
 			for(;number_of_actions > 0; number_of_actions--){
@@ -311,36 +309,51 @@
 				water_flag.NetworkUpdate(objects[flag_carry],flag_x,flag_y);
 			}
 			
+			
+			if(game.state_number != state_number){
+				Load();
+			}
 		}
-		public function DropFlag(flag:Flag){
+		public function DropFlag(state_number:int,flag:Flag){
 			connection.Add (function(socket:Socket)
 							{
 							 	socket.writeInt(8);
+								socket.writeInt(state_number);
 								socket.writeInt(team_map[flag.team]);
 								socket.writeFloat(flag.body.GetPosition().x);
 								socket.writeFloat(flag.body.GetPosition().y);
 								socket.writeInt(-1);
 					  		},0,Connection.Nothing);
 		}
-		public function PickFlag(flag:Flag){
+		public function PickFlag(state_number:int,flag:Flag){
 			var carry = flag.carry;
 			connection.Add (function(socket:Socket)
 							{
 							 	socket.writeInt(8);
+								socket.writeInt(state_number);
 								socket.writeInt(team_map[flag.team]);
 								socket.writeFloat(flag.body.GetPosition().x);
 								socket.writeFloat(flag.body.GetPosition().y);
 								socket.writeInt(carry.unique);
 					  		},0,Connection.Nothing);
 		}
-		public function ResetFlag(flag:Flag){
+		public function ResetFlag(state_number:int,flag:Flag){
 			connection.Add (function(socket:Socket)
 							{
 							 	socket.writeInt(8);
+								socket.writeInt(state_number);
 								socket.writeInt(team_map[flag.team]);
 								socket.writeFloat(flag.body.GetPosition().x);
 								socket.writeFloat(flag.body.GetPosition().y);
 								socket.writeInt(0);
+					  		},0,Connection.Nothing);
+		}
+		public function Win(state_number:int,team:String){
+			connection.Add (function(socket:Socket)
+							{
+							 	socket.writeInt(9);
+								socket.writeInt(state_number);
+								socket.writeInt(team_map[team]);
 					  		},0,Connection.Nothing);
 		}
 		public function Start(game:Game){
@@ -357,20 +370,20 @@
 							 	socket.writeInt(7);
 					  		},8,function(socket:Socket)
 							{
-							 	game.state_number = socket.readInt();
-								game.level = socket.readInt();
+							 	var state_number = socket.readInt();
+								var level = socket.readInt();
 								objects = new Dictionary(true);
 								me = null;
 								running = true;
-								game.Reload();
-								StateLoop(game.state_number);
+								game.Reload(state_number,level);
+								StateLoop(state_number);
 					  		});
 		}
-		public function Step(){
+		public function Step(state_number:int){
 			connection.Add (function(socket:Socket)
 							{
 							 	socket.writeInt(3);
-								Send(game.id,game.team,socket);
+								Send(state_number,game.id,game.team,socket);
 					  		},0,Connection.Nothing);
 		}
 		public function StateLoop(state_number:int){

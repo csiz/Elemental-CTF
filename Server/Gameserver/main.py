@@ -66,7 +66,7 @@ def ReceivePlayerState(stream,player,room):
 		objects.append(Object(unique,role,flavor,x,y,vx,vy,hp))
 
 	with room.lock:
-		if room.state_number == state_number:
+		if state_number == room.state_number:
 			player.team = team
 			player.time = time
 			player.objects = objects
@@ -107,13 +107,16 @@ def SendGameState(stream,player,room):
 	for f in flags:
 		stream.write('ffi',flags[f].x,flags[f].y,flags[f].unique)
 
+	time.sleep(0.01)#artficial laag
+
 
 def ReceiveAction(stream,player,room):
-	(time,) = stream.read('f')
+	(state_number,time) = stream.read('if')
 	with room.lock:
-		for id in room.players:
-			if id != player.id:
-				room.players[id].actions.append(Action(player.id,time))
+		if state_number == room.state_number:
+			for id in room.players:
+				if id != player.id:
+					room.players[id].actions.append(Action(player.id,time))
 
 
 def SendGameOverview(stream,player,room):
@@ -124,11 +127,27 @@ def SendGameOverview(stream,player,room):
 	stream.write('ii',state_number,level)
 
 def ReceiveFlagState(stream,player,room):
-	(flag,x,y,unique) = stream.read('iffi')
+	(state_number,flag,x,y,unique) = stream.read('iiffi')
 	with room.lock:
-		room.flags[flag].unique = unique
-		room.flags[flag].x = x
-		room.flags[flag].y = y
+		if state_number == room.state_number:
+			room.flags[flag].unique = unique
+			room.flags[flag].x = x
+			room.flags[flag].y = y
+
+def ReceiveWin(stream,player,room):
+	(state_number,team) = stream.read('ii')
+	with room.lock:
+		if state_number == room.state_number:
+			if not room.win:
+				player.win = team
+				count = 0
+				for id in room.players:
+					if room.players[id].win == team:
+						count += 1
+
+				if count >= (len(room.players)/2):
+					room.Win(team)
+
 
 
 ###############################################################################################################################
@@ -183,6 +202,7 @@ MessageHandler = {#reads, returns:
 	5:ReceiveAction,#read float
 	7:SendGameOverview,#writes 'ii' (state number and level)
 	8:ReceiveFlagState,#reads flag,x,y, unique
+	9:ReceiveWin,#reads int team
 
 
 }
@@ -203,7 +223,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 				(message_id,) = stream.read('i')
 				MessageHandler[message_id](stream,player,room)
 		except Exception as error:
-			print("A player has been lost, the error was:",str(error))
+			print("A player has been lost, the error was:",str(error),"while processing the message:",message_id)
 			PlayerLost(player,room)
 		finally:
 			if room:

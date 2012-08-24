@@ -7,11 +7,13 @@ class Player:
 		self.id = id
 
 		#state information
-		self.team = 0;
+		self.win = False
+		self.team = 0
 		self.time = 0 #time of update
 		self.objects = []
 		#incoming information
 		self.actions = []
+
 
 class Object:
 	def __init__(self,unique,role,flavor,x,y,vx,vy,hp):
@@ -34,19 +36,41 @@ class Action:
 class GameRoom:
 	#todo
 	def __init__(self):
+		self.lock = threading.RLock()
 		#state
 		self.state_number = 0
-		self.level = 0
-		self.players = {}
-		self.flags = {
-			1:Object(0,None,None,0,0,None,None,None),#fire flag
-			2:Object(0,None,None,0,0,None,None,None)#water flag
-		}#unique is the carrier or 0 if its origin or -1 if its floating, x and y are the positions if its floating
-
 		self.time = time.time()
 		self.id_count = 1
-		self.lock = threading.RLock()
+		self.level = 0
+		self.win = 0
+		#entities
+		self.players = {}
+		self.flags = {}
 		print("Created a new room.")
+		self.NewLevel()
+
+	def NewLevel(self,lvl = None):
+		if lvl == None:#todo, select a random lvl from the level pool
+			lvl = 0
+
+		with self.lock:
+			#entities reset
+			self.flags = {
+				1:Object(0,None,None,0,0,None,None,None),#fire flag
+				2:Object(0,None,None,0,0,None,None,None)#water flag
+			}#unique is the carrier or 0 if its origin or -1 if its floating, x and y are the positions if its floating
+			for id in self.players:
+				self.players[id].__init__(id)
+
+			#new state
+			self.state_number += 1
+			self.level = lvl
+			self.win = 0
+
+	def Win(self,team):
+		self.win = team
+		self.NewLevel()
+
 
 	def NewPlayer(self):
 		with self.lock:

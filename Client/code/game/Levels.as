@@ -16,12 +16,19 @@
 			map = new Object();
 			map["O"] = "brick";
 			map["B"] = "bouncy";
-			map[" "] = "space";
-			map["1"] = "team fire";
-			map["2"] = "team water";
-			map["a"] = "fire flag";
-			map["b"] = "water flag";
+			map["I"] = "ice";//todo
+			map["L"] = "lava";//todo
+			
 			map["."] = "space";
+			map[" "] = "space";
+			
+			map["1"] = "team fire";
+			map["a"] = "fire flag";
+			
+			map["2"] = "team water";
+			map["b"] = "water flag";
+			
+			
 			
 			level[0] = new Object();
 			
@@ -39,10 +46,10 @@
 									 "O                                         O                         .2.                      O",
 									 "O                                                 OOO               ...                      O",
 									 "O                                                  O                                         O",
-									 "O                                                                                            O",
-									 "O                                                       OOOOOOO                              O",
-									 "O                                                                    O                       O",
-									 "O                                                                                            O",
+									 "O                                         O                                                  O",
+									 "O                                        OOO            OOOOOOO                              O",
+									 "O                                                                    III                     O",
+									 "O                                                                     I                      O",
 									 "O                                                                                            O",
 									 "O                                                                    b                       O",
 									 "O                                                              OOOOOOOOOOOO OOOOOOOO         O",
@@ -52,7 +59,7 @@
 									 "O                                                 OOOOOO                                   OOO",
 									 "O                                                OOOOOO                                      O",
 									 "O                                               OOOOOO                                       O",
-									 "OBBBBOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
+									 "OBBBBOOOOLLLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
 			level[0].width = level[0].map[0].length;
 			level[0].height = level[0].map.length;
 									 
@@ -69,54 +76,54 @@
 			}
 			//warning:
 			var test = new Array();
-			if(map[level[lvl].map[y-1].charAt(x-1)] == "space" ){
-				test[0] = 0;
-			}else{
+			if(level[lvl].map[y-1].charAt(x-1).match(/[A-Z]/g).length){
 				test[0] = 1;
+			}else{
+				test[0] = 0;
 			}
 			
-			if(map[level[lvl].map[y-1].charAt(x)] == "space" ){
-				test[1] = 0;
-			}else{
+			if(level[lvl].map[y-1].charAt(x).match(/[A-Z]/g).length){
 				test[1] = 1;
+			}else{
+				test[1] = 0;
 			}
 			
-			if(map[level[lvl].map[y-1].charAt(x+1)] == "space" ){
-				test[2] = 0;
-			}else{
+			if(level[lvl].map[y-1].charAt(x+1).match(/[A-Z]/g).length){
 				test[2] = 1;
+			}else{
+				test[2] = 0;
 			}
 			
-			if(map[level[lvl].map[y].charAt(x-1)] == "space" ){
-				test[3] = 0;
-			}else{
+			if(level[lvl].map[y].charAt(x-1).match(/[A-Z]/g).length){
 				test[3] = 1;
+			}else{
+				test[3] = 0;
 			}
 			
 			test[4] = 1;
 			
-			if(map[level[lvl].map[y].charAt(x+1)] == "space" ){
-				test[5] = 0;
-			}else{
+			if(level[lvl].map[y].charAt(x+1).match(/[A-Z]/g).length){
 				test[5] = 1;
+			}else{
+				test[5] = 0;
 			}
 			
-			if(map[level[lvl].map[y+1].charAt(x-1)] == "space" ){
-				test[6] = 0;
-			}else{
+			if(level[lvl].map[y+1].charAt(x-1).match(/[A-Z]/g).length){
 				test[6] = 1;
+			}else{
+				test[6] = 0;
 			}
 			
-			if(map[level[lvl].map[y+1].charAt(x)] == "space" ){
-				test[7] = 0;
-			}else{
+			if(level[lvl].map[y+1].charAt(x).match(/[A-Z]/g).length){
 				test[7] = 1;
+			}else{
+				test[7] = 0;
 			}
 			
-			if(map[level[lvl].map[y+1].charAt(x+1)] == "space" ){
-				test[8] = 0;
-			}else{
+			if(level[lvl].map[y+1].charAt(x+1).match(/[A-Z]/g).length){
 				test[8] = 1;
+			}else{
+				test[8] = 0;
 			}
 			//i did warn myself:
 			switch( test.toString() ){

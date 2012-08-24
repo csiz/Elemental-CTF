@@ -10,6 +10,7 @@
 	import flash.utils.Dictionary;
 	import Box2D.Dynamics.b2Body;
 	import Box2D.Dynamics.Contacts.*;
+	import Box2D.Dynamics.b2Fixture;
 
 	
 	public class Game extends MovieClip{
@@ -21,6 +22,7 @@
 		public var box2d:Box2d;
 		//level data
 		public var levels:Levels;
+		public var win:Boolean;
 		//scene data
 		public var movie:MovieClip;
 		public var ui:MovieClip;
@@ -87,10 +89,14 @@
 			network.Load();
 		}
 		
-		public function Reload(){
+		public function Reload(state_number:int,level:int){
 			//first we clear everything
 			removeChildren();
 			//then we put everything back
+			win = false;
+			this.state_number = state_number;
+			this.level = level;
+			
 			movie = new MovieClip();
 			addChild(movie);
 			
@@ -105,6 +111,8 @@
 			box2d.LoadLevel(level);
 			box2d.AddFlag(levels.GetSpawn(level,"water flag"),"water");
 			box2d.AddFlag(levels.GetSpawn(level,"fire flag"),"fire");
+			
+			
 			
 			
 			//todo v
@@ -143,7 +151,6 @@
 			box2d.ChangePositionAndSpeed(obj.body,x,y,vx,vy);
 		}
 		public function AnimateAction(id:int,elapsed_time:Number){
-			trace("received action from player",id,"that happened",elapsed_time,"seconds ago");
 			//todo animations
 		}
 		
@@ -187,6 +194,7 @@
 			var contactEdge:b2ContactEdge;
 			var contact:b2Contact;
 			var hit:b2Body;
+			var fixture_hit:b2Fixture;
 			var attacks:Dictionary = new Dictionary();
 			//players
 			for(body in player_list){
@@ -284,8 +292,45 @@
 						contactEdge = contactEdge.next;
 					}
 				}
-				//end flags
 			}
+			//end flags
+			//lava and fire deaths
+			for(body in player_list){
+				if(player_list[body]){
+					if(body.GetUserData().alive){
+						contactEdge = body.GetContactList();
+						while(contactEdge){
+							contact = contactEdge.contact;
+							if(contact.IsTouching()){
+								if(contact.GetFixtureA().GetBody() != body){
+									fixture_hit = contact.GetFixtureA();
+								}
+								if(contact.GetFixtureB().GetBody() != body){
+									fixture_hit = contact.GetFixtureB()
+								}
+								//hit is the thing that "body" hit
+								if(fixture_hit.GetUserData()){
+									if(fixture_hit.GetUserData().role == "brick"){
+										if(fixture_hit.GetUserData().flavor == "ice"){
+											if(body.GetUserData().team == "fire"){
+												body.GetUserData().Kill();
+											}
+										}
+										if(fixture_hit.GetUserData().flavor == "lava"){
+											if(body.GetUserData().team == "water"){
+												body.GetUserData().Kill();
+											}
+										}
+									}
+								}
+							}
+							contactEdge = contactEdge.next;
+						}
+					}
+				}
+			}
+			//end lava and fire
+			
             //Game loop ends here..............................................................*
         	//loop updates
 			//fps update
@@ -297,6 +342,7 @@
 				if(player_list[body]){
 					player_list[body].actionSince += timeStep;
 					player_list[body].attackTimer +=timeStep;
+					player_list[body].hitTimer += timeStep;
 					if(player_list[body].alive){
 						player_list[body].health += player_list[body].regen * timeStep/1000;
 						if(player_list[body].health > player_list[body].maxHealth){
@@ -321,14 +367,18 @@
 			}
 			
 			//Network
-			network.Step();
+			network.Step(state_number);
 			
 			//Message //testing
 			ui.message.text = (1000/timeStep).toFixed(2);
 			//message.text = me.health.toFixed(5);
 		}
 		public function Win(team:String){
-			trace("Team: " + team + " won!");
+			if(!win){
+				trace("Team: " + team + " won!");
+				network.Win(state_number,team);
+				win = true;
+			}
 		}
 		
 		//Game controls:
