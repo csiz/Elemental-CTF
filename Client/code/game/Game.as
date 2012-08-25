@@ -49,7 +49,7 @@
 		public var state_number:int;
 		public var level:int;
 		public var ready_timer:Number;
-		public var ready_functions:Array;
+		public var Ready:Function;
 		
 		
 		public function Game(network:Network = null)
@@ -97,15 +97,17 @@
 			//then we put everything back
 			win = false;
 			ready_timer = 0;
-			ready_functions = new Array();
+			Ready = null;
 			this.state_number = state_number;
 			this.level = level;
 			
 			movie = new MovieClip();
 			addChild(movie);
 			
-			ui = new UI();
+			ui = new UI(this);
 			addChild(ui);
+			
+			me = null;
 			
 			player_list = new Dictionary(true);
 			projectile_list = new Dictionary(true);
@@ -119,22 +121,21 @@
 			time = getTimer();
 			running = true;
 			
-			Ready(function (){Spawn("ranged water")});
-		}
-		public function Ready(func:Function){
-			ready_functions.push(func);
+			ui.ChosePlayer();
 		}
 		
-		public function Spawn(flavor:String){
+		public function Spawn(flavor:String,type:String){
 			me = box2d.AddPlayer(flavor,id);
-			speed = 0.03;//ranged
-			//speed = 0.07;//melee
-			//todo
+			if(type == "ranged"){
+				speed = 0.03;//ranged
+			}else if(type == "melee"){
+				speed = 0.07;//melee
+			}
 		}
 		public function Kill(time:Number = 0 /*todo*/){
-			ready_timer = 1000;//be dead for 10 seconds before respawn
+			ready_timer = 3000;//be dead for 10 seconds before respawn
 			me = null;
-			Ready(function (){Spawn("ranged water")});
+			ui.ChosePlayer();
 			//todo
 		}
 		
@@ -333,8 +334,9 @@
 			//execute ready functions if ready
 			ready_timer -= timeStep;
 			if(ready_timer <= 0){
-				while(ready_functions.length){
-					ready_functions.shift()();
+				if(Ready != null){
+					Ready();
+					Ready = null;
 				}
 			}
 			//check me state

@@ -9,7 +9,7 @@
 	
 
 	public class Main extends MovieClip{
-		public const SERVER = "127.0.0.1";
+		public const SERVER = "188.24.44.234";
 		public const PORT = 25971;
 		
 		public var id = new ByteArray();

@@ -18,7 +18,7 @@ from socketstream import *
 from game import * #GameRoom,Player class import
 
 
-SERVER,SERVER_PORT = 'localhost', 25972
+SERVER,SERVER_PORT = '188.24.44.234', 25972
 HOST, PORT = '', 25973 #socket.gethostname(), 25971
 ID = b'1'
 PASSWORD = hashlib.sha256(b'ep2').digest()
@@ -109,7 +109,8 @@ def SendGameState(stream,player,room):
 	for f in flags:
 		stream.write('ffi',flags[f].x,flags[f].y,flags[f].unique)
 
-	time.sleep(0.01)#artficial laag
+	#time.sleep(0.01)#artficial lag
+	
 
 
 def ReceiveAction(stream,player,room):
