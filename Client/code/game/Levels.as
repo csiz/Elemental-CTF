@@ -22,10 +22,10 @@
 			map["."] = "space";
 			map[" "] = "space";
 			
-			map["1"] = "team fire";
+			map["1"] = "fire";
 			map["a"] = "fire flag";
 			
-			map["2"] = "team water";
+			map["2"] = "water";
 			map["b"] = "water flag";
 			
 			

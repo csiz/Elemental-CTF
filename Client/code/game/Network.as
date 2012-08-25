@@ -16,7 +16,6 @@
 		public var objects:Dictionary;
 		public var water_flag:Flag;
 		public var fire_flag:Flag;
-		public var me:Player;
 		public var connection:Connection;
 		public var functions:Array;
 		public var ready:Boolean;
@@ -137,11 +136,6 @@
 			}
 		}
 
-		public function AddUser(me:Player){
-			this.me = me;
-			me.id = game.id;
-			game.team = me.team;
-		}
 		public function AddFlag(flag:Flag){
 			if(flag.team == "fire"){
 				fire_flag = flag;
@@ -227,7 +221,7 @@
 			var obj:*;
 			for(obj in objects){
 				if(objects[obj]){
-					if(objects[obj].id != me.id){
+					if(objects[obj].id != game.id){
 						objects[obj].health = int.MIN_VALUE;//mark everything with minumum health
 					}
 				}
@@ -256,21 +250,26 @@
 					if(objects[unique]){//if it exists in the list
 						obj = objects[unique];//easy access
 						//check for consistency
-						if( (obj.role == role) && (obj.flavor == flavor) && (obj.id == player_id) && (obj.team == player_team))
+						if( (obj.role == role) && (obj.flavor == flavor) && (obj.id == player_id))
 						{
+							game.Change(obj,health,x,y,vx,vy);
 							//everything is alright, continue
 						}else{//collision happened, stuff is weird here
 							trace("Network: you basically won the lottery.");
 						}
 					}else{//create it otherwise
-						obj = game.Add(role,flavor,x,y,vx,vy,player_id, unique, player_team);
+						//only if its still alive, no need to add dead bodies:
+						if(health > 0){
+							obj = game.Add(role,flavor,x,y,vx,vy,player_id, unique, player_team);
+							game.Change(obj,health,x,y,vx,vy);
+						}//silently ignore otherwise.
 					}
-					game.Change(obj,health,x,y,vx,vy);
+					
 				}
 			}
 			for(obj in objects){
 				if(objects[obj]){
-					if(objects[obj].id != me.id){
+					if(objects[obj].id != game.id){
 						if(objects[obj].health == int.MIN_VALUE){
 							//if its still marked (hasn't been updated by previous code) remove
 							objects[obj].Remove();
@@ -373,17 +372,16 @@
 							 	var state_number = socket.readInt();
 								var level = socket.readInt();
 								objects = new Dictionary(true);
-								me = null;
 								running = true;
 								game.Reload(state_number,level);
 								StateLoop(state_number);
 					  		});
 		}
-		public function Step(state_number:int){
+		public function Step(state_number:int,id:int = 0, team:String = "netrual"){
 			connection.Add (function(socket:Socket)
 							{
 							 	socket.writeInt(3);
-								Send(state_number,game.id,game.team,socket);
+								Send(state_number,id,team,socket);
 					  		},0,Connection.Nothing);
 		}
 		public function StateLoop(state_number:int){

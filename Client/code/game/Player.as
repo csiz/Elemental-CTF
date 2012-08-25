@@ -58,6 +58,7 @@
 			actionSince = 5000;
 			attackTimer = 0;
 			hitTimer = 0;
+			deathTimer = 0;
 			alive = true;
 			switch (flavor)
 			{
@@ -247,6 +248,23 @@
 				removed = true;
 			}
 		}
+		public function Update(timeStep:Number){
+			actionSince += timeStep;
+			attackTimer +=timeStep;
+			hitTimer += timeStep;
+			if(!alive){
+				deathTimer += timeStep;
+				if(deathTimer > 5000){
+					Remove();
+				}
+			}
+			if(alive){
+				health += regen * timeStep/1000;
+				if(health > maxHealth){
+					health = maxHealth;
+				}
+			}
+		}
 		public function Attack(damage:Number, id:int){
 			if(hitTimer > 50){//to exclude double attacks and such, this may present some problems later
 				health -= damage;
@@ -261,7 +279,8 @@
 					flag.Drop();
 				}
 				alive = false;
-				Remove();
+				deathTimer = 0;
+				health = 0;
 			}
 		}
 	}

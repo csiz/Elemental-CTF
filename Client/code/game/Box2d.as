@@ -172,7 +172,7 @@
 			}
 		}
 		
-		public function AddPlayer(pos:Point, flavor:String, id:int = 0, unique:int = 0):Player
+		public function AddPlayer(flavor:String, id:int = 0, unique:int = 0, pos:Point = null):Player
 		{
 			var body:b2Body;
 			var bodyDef:b2BodyDef;
@@ -180,8 +180,6 @@
 			var circleShape:b2CircleShape;
 			
 			bodyDef = new b2BodyDef();
-			bodyDef.position.x = pos.x;
-			bodyDef.position.y = pos.y;
 			bodyDef.fixedRotation = true;
 			bodyDef.type = b2Body.b2_dynamicBody;
 			body = m_world.CreateBody(bodyDef);
@@ -330,7 +328,13 @@
 				default:
 				trace("No player of type: "+flavor);
 			}
+			
+			
 			body.SetUserData(new Player(body,flavor,id,unique,game));
+			if(pos == null){
+				pos = game.levels.GetSpawn(game.level,body.GetUserData().team); 
+			}
+			body.SetPosition(new b2Vec2(pos.x,pos.y));
 			update_list[body] = body.GetUserData().sprite;
 			game.player_list[body] = body.GetUserData();
 			return body.GetUserData();
@@ -388,15 +392,13 @@
 			return body.GetUserData();
 		}
 		
-		public function AddFlag(pos:Point, team:String):Flag{
+		public function AddFlag(team:String,pos:b2Vec2 = null):Flag{
 			var body:b2Body;
 			var bodyDef:b2BodyDef;
 			var fixtureDef:b2FixtureDef;
 			var circleShape:b2CircleShape;
 			
 			bodyDef = new b2BodyDef();
-			bodyDef.position.x = pos.x;
-			bodyDef.position.y = pos.y;
 			
 			bodyDef.type = b2Body.b2_staticBody;
 			
@@ -408,7 +410,11 @@
 			body.CreateFixture(fixtureDef);
 
 
-			body.SetUserData(new Flag(body,team,pos,game));
+			body.SetUserData(new Flag(body,team,game));
+			if(pos == null){
+				pos = body.GetUserData().origin;
+			}
+			body.SetPosition(pos);
 			update_list[body] = body.GetUserData().sprite;
 			game.flag_list[body] = body.GetUserData();
 			movie.addChild(body.GetUserData().sprite);

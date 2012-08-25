@@ -55,8 +55,10 @@ def GetID(stream,player,room):
 
 def ReceivePlayerState(stream,player,room):
 	(state_number,id,team,time,count) = stream.read('iiifi')
-
-	if id != player.id:
+	if id == 0:
+		state_number = -1
+		#silently ignore
+	elif id != player.id:
 		raise Exception("Haven't requested the information of another player.")
 		#todo, receiving information about another player for cheat/sync check
 

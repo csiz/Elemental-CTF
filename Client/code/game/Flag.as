@@ -18,7 +18,7 @@
 		public var carry:Player;
 		public var origin:b2Vec2;
 		
-		public function Flag(body:b2Body,team:String, pos:Point, game:Game){
+		public function Flag(body:b2Body,team:String, game:Game){
 			
 			health = 0;
 			alive = true;
@@ -27,9 +27,8 @@
 			this.body = body;
 			this.game = game;
 			this.team = team;
+			var pos = new Point();
 			origin = new b2Vec2();
-			origin.x = pos.x;
-			origin.y = pos.y;
 			role = "flag";
 			carry = null;
 			
@@ -38,16 +37,20 @@
 				sprite = new FlagFire();
 				unique = 1;
 				flavor = "flag fire";
+				pos = game.levels.GetSpawn(game.level,"fire flag");
 				break;
 				case "water":
 				sprite = new FlagWater();
 				unique = 2;
 				flavor = "flag water";
+				pos = game.levels.GetSpawn(game.level,"water flag");
 				break;
 				default:
 				trace("wtf");
 			}
 			
+			origin.x = pos.x;
+			origin.y = pos.y;
 			game.network.AddFlag(this);
 		}
 		

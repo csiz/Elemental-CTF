@@ -48,6 +48,8 @@
 		public var running:Boolean;
 		public var state_number:int;
 		public var level:int;
+		public var ready_timer:Number;
+		public var ready_functions:Array;
 		
 		
 		public function Game(network:Network = null)
@@ -94,6 +96,8 @@
 			removeChildren();
 			//then we put everything back
 			win = false;
+			ready_timer = 0;
+			ready_functions = new Array();
 			this.state_number = state_number;
 			this.level = level;
 			
@@ -109,23 +113,30 @@
 			box2d = new Box2d(levels,movie,this);
 
 			box2d.LoadLevel(level);
-			box2d.AddFlag(levels.GetSpawn(level,"water flag"),"water");
-			box2d.AddFlag(levels.GetSpawn(level,"fire flag"),"fire");
-			
-			
-			
-			
-			//todo v
-			me = box2d.AddPlayer(levels.GetSpawn(level,"team water"), "ranged water");
-			network.AddUser(me);
-			speed = 0.03;//ranged
-			//speed = 0.07;//melee
-			//todo ^
+			box2d.AddFlag("water");
+			box2d.AddFlag("fire");
 			
 			time = getTimer();
 			running = true;
+			
+			Ready(function (){Spawn("ranged water")});
+		}
+		public function Ready(func:Function){
+			ready_functions.push(func);
 		}
 		
+		public function Spawn(flavor:String){
+			me = box2d.AddPlayer(flavor,id);
+			speed = 0.03;//ranged
+			//speed = 0.07;//melee
+			//todo
+		}
+		public function Kill(time:Number = 0 /*todo*/){
+			ready_timer = 1000;//be dead for 10 seconds before respawn
+			me = null;
+			Ready(function (){Spawn("ranged water")});
+			//todo
+		}
 		
 		public function Add(role:String, flavor:String, x:Number, y:Number, vx:Number, vy:Number, id:int, unique:int, team:String){
 			//when adding new types, you have to modify 3 things:
@@ -134,7 +145,7 @@
 			
 			switch (role){
 				case "player":
-				return box2d.AddPlayer(new Point(x,y), flavor, id, unique);
+				return box2d.AddPlayer(flavor, id, unique);
 				break;
 				case "projectile":
 				return box2d.AddProjectile(new Point(x,y), new Point(vx,vy),flavor,id,unique);
@@ -159,36 +170,7 @@
 			if(!running){
 				return;
 			}
-			//controls
-			var temp_x:Number;
-			var temp_y:Number;
-			if(a){
-				me.Left(timeStep);
-			}
-			if(d){
-				me.Right(timeStep);
-			}
-			if(w){
-				me.Jump(timeStep);
-			}
-			if(s){
-				me.Down(timeStep);
-			}
-			if(mouse){
-				
-				temp_x = mouseX - me.sprite.x - movie.x;
-				temp_y = mouseY - me.sprite.y - movie.y;
-				
-				temp_x/=7;
-				temp_y/=7;
-				me.Action(temp_x,temp_y);
-			}
-			if(space){
-				temp_x = me.body.GetLinearVelocity().x;
-				temp_y = me.body.GetLinearVelocity().y;
-				
-				me.Action(temp_x,temp_y);
-			}
+			
 			//Game loop starts here............................................................*
 			//attacks
 			var contactEdge:b2ContactEdge;
@@ -271,20 +253,22 @@
 							}
 							//hit is the thing that "body" hit
 							if(hit.GetUserData().role == "player"){
-								if(body.GetUserData().team != hit.GetUserData().team){
-									if(!body.GetUserData().carry){
-										body.GetUserData().Pick(hit.GetUserData());
-									}
-								}else{
-									if(!body.GetUserData().carry){
+								if(hit.GetUserData().alive){
+									if(body.GetUserData().team != hit.GetUserData().team){
+										if(!body.GetUserData().carry){
+											body.GetUserData().Pick(hit.GetUserData());
+										}
+									}else{
+										if(!body.GetUserData().carry){
+											if(hit.GetUserData().flag){
+												Win(hit.GetUserData().team);
+											}
+											//if the enemy drops the flag and you reach it you still win
+											body.GetUserData().Reset();
+										}
 										if(hit.GetUserData().flag){
 											Win(hit.GetUserData().team);
 										}
-										//if the enemy drops the flag and you reach it you still win
-										body.GetUserData().Reset();
-									}
-									if(hit.GetUserData().flag){
-										Win(hit.GetUserData().team);
 									}
 								}
 							}
@@ -332,7 +316,7 @@
 			//end lava and fire
 			
             //Game loop ends here..............................................................*
-        	//loop updates
+        	//Loop updates.....................................................................
 			//fps update
 			timeStep = - time + (time = getTimer() );
 			
@@ -340,34 +324,99 @@
 			var body:*;
 			for(body in player_list){
 				if(player_list[body]){
-					player_list[body].actionSince += timeStep;
-					player_list[body].attackTimer +=timeStep;
-					player_list[body].hitTimer += timeStep;
-					if(player_list[body].alive){
-						player_list[body].health += player_list[body].regen * timeStep/1000;
-						if(player_list[body].health > player_list[body].maxHealth){
-							player_list[body].health = player_list[body].maxHealth;
-						}
-					}
+					player_list[body].Update(timeStep);
 				}
 			}
 			//Box2d
 			box2d.Update(timeStep);
-			//Centering screen, slowly
-			//movie.x += ( ( 325  -me.sprite.x - ( me.body.GetLinearVelocity().x * 40 ) ) - movie.x ) * 0.007;
-			//movie.y += ( ( 200  -me.sprite.y - ( me.body.GetLinearVelocity().y * 20 ) ) - movie.y ) * 0.006;
-			
-			if(control == "keyboard"){
-				movie.x += ( ( 325  -me.sprite.x ) - movie.x ) * speed;
-				movie.y += ( ( 200  -me.sprite.y ) - movie.y ) * speed;
+			//Game updates
+			//execute ready functions if ready
+			ready_timer -= timeStep;
+			if(ready_timer <= 0){
+				while(ready_functions.length){
+					ready_functions.shift()();
+				}
 			}
-			if(control == "mouse"){
-				movie.x += ( ( ( 325  -me.sprite.x ) - (mouseX - 325)*0.5 ) - movie.x ) * speed;
-				movie.y += ( ( ( 200  -me.sprite.y ) - (mouseY - 200)*0.5 ) - movie.y ) * speed;
+			//check me state
+			if(me){
+				if(!me.alive){
+					Kill();
+				}
+			}
+			//Network "me" update
+			if(me){
+				network.Step(state_number,me.id,me.team);
+			}else{
+				network.Step(state_number,id,"neutral");
 			}
 			
-			//Network
-			network.Step(state_number);
+			//Loop updates end.................................................................
+			if(me){
+				//camera
+				//Centering screen, slowly
+				//movie.x += ( ( 325  -me.sprite.x - ( me.body.GetLinearVelocity().x * 40 ) ) - movie.x ) * 0.007;
+				//movie.y += ( ( 200  -me.sprite.y - ( me.body.GetLinearVelocity().y * 20 ) ) - movie.y ) * 0.006;
+				if(control == "keyboard"){
+					movie.x += ( ( 325  -me.sprite.x ) - movie.x ) * speed;
+					movie.y += ( ( 200  -me.sprite.y ) - movie.y ) * speed;
+				}
+				if(control == "mouse"){
+					movie.x += ( ( ( 325  -me.sprite.x ) - (mouseX - 325)*0.5 ) - movie.x ) * speed;
+					movie.y += ( ( ( 200  -me.sprite.y ) - (mouseY - 200)*0.5 ) - movie.y ) * speed;
+				}
+				//controls
+				var temp_x:Number;
+				var temp_y:Number;
+				if(a){
+					me.Left(timeStep);
+				}
+				if(d){
+					me.Right(timeStep);
+				}
+				if(w){
+					me.Jump(timeStep);
+				}
+				if(s){
+					me.Down(timeStep);
+				}
+				if(mouse){
+					
+					temp_x = mouseX - me.sprite.x - movie.x;
+					temp_y = mouseY - me.sprite.y - movie.y;
+					
+					temp_x/=7;
+					temp_y/=7;
+					me.Action(temp_x,temp_y);
+				}
+				if(space){
+					temp_x = me.body.GetLinearVelocity().x;
+					temp_y = me.body.GetLinearVelocity().y;
+					
+					me.Action(temp_x,temp_y);
+				}
+			}else{
+				//camera work, individual
+				if(control == "keyboard"){
+					speed = 10;
+					if(a){
+						movie.x += speed;
+					}
+					if(d){
+						movie.x -= speed;
+					}
+					if(w){
+						movie.y += speed;
+					}
+					if(s){
+						movie.y -= speed;
+					}
+				}
+				if(control == "mouse"){
+					speed = 0.07;
+					movie.x += ( - (mouseX - 325)*0.5 ) * speed;
+					movie.y += ( - (mouseY - 200)*0.5 ) * speed;
+				}
+			}
 			
 			//Message //testing
 			ui.message.text = (1000/timeStep).toFixed(2);
