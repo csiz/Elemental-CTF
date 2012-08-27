@@ -27,6 +27,9 @@
 		
 		public var reference_time:Number;
 		
+		public var action_buffer:Array;
+		public var flag_update:FlagAction;
+		
 		public function Time():Number{
 			return (getTimer()*0.001) + reference_time;
 		}
@@ -68,6 +71,8 @@
 			
 			
 			functions = new Array();
+			action_buffer = new Array();
+			flag_update = null;
 			ready = false;
 			reference_time = 0;
 			id = 0;
@@ -162,13 +167,7 @@
 		}
 		public function Action(state_number:int,id:int){
 			if(id == game.id){
-				var time_of_action = Time();
-				connection.Add (function(socket:Socket)
-								{
-									socket.writeInt(5);
-									socket.writeInt(state_number);
-									socket.writeFloat(time_of_action);
-								},0,Connection.Nothing);
+				action_buffer.push(Time());
 			}
 		}
 //End functions that add and remove things......................................................
@@ -244,6 +243,10 @@
 					
 					var delay = Time() - time_of_update;
 					
+					//todo
+					//this modification, may give the player a ver nice illusion of continuity, but it may affect game play. Bascially it will remove the delay between a player launching a projectile and it leaving the player (so there's no window where fire player can't shoot because of lag) however this may lead the player to shoot behind what someone else is doing.
+					delay -= (50 * 0.001);
+					
 					x += vx * delay;
 					y += vy * delay;
 					
@@ -258,11 +261,10 @@
 							trace("Network: you basically won the lottery.");
 						}
 					}else{//create it otherwise
-						//only if its still alive, no need to add dead bodies:
-						if(health > 0){
-							obj = game.Add(role,flavor,x,y,vx,vy,player_id, unique, player_team);
+						obj = game.Add(role,flavor,x,y,vx,vy,player_id, unique, player_team);
+						if(obj){
 							game.Change(obj,health,x,y,vx,vy);
-						}//silently ignore otherwise.
+						}
 					}
 					
 				}
@@ -314,38 +316,25 @@
 			}
 		}
 		public function DropFlag(state_number:int,flag:Flag){
-			connection.Add (function(socket:Socket)
-							{
-							 	socket.writeInt(8);
-								socket.writeInt(state_number);
-								socket.writeInt(team_map[flag.team]);
-								socket.writeFloat(flag.body.GetPosition().x);
-								socket.writeFloat(flag.body.GetPosition().y);
-								socket.writeInt(-1);
-					  		},0,Connection.Nothing);
+			flag_update = new FlagAction();
+			flag_update.team = flag.team;
+			flag_update.x = flag.body.GetPosition().x;
+			flag_update.y = flag.body.GetPosition().y;
+			flag_update.unique = -1;
 		}
 		public function PickFlag(state_number:int,flag:Flag){
-			var carry = flag.carry;
-			connection.Add (function(socket:Socket)
-							{
-							 	socket.writeInt(8);
-								socket.writeInt(state_number);
-								socket.writeInt(team_map[flag.team]);
-								socket.writeFloat(flag.body.GetPosition().x);
-								socket.writeFloat(flag.body.GetPosition().y);
-								socket.writeInt(carry.unique);
-					  		},0,Connection.Nothing);
+			flag_update = new FlagAction();
+			flag_update.team = flag.team;
+			flag_update.x = flag.body.GetPosition().x;
+			flag_update.y = flag.body.GetPosition().y;
+			flag_update.unique = flag.carry.unique;
 		}
 		public function ResetFlag(state_number:int,flag:Flag){
-			connection.Add (function(socket:Socket)
-							{
-							 	socket.writeInt(8);
-								socket.writeInt(state_number);
-								socket.writeInt(team_map[flag.team]);
-								socket.writeFloat(flag.body.GetPosition().x);
-								socket.writeFloat(flag.body.GetPosition().y);
-								socket.writeInt(0);
-					  		},0,Connection.Nothing);
+			flag_update = new FlagAction();
+			flag_update.team = flag.team;
+			flag_update.x = flag.body.GetPosition().x;
+			flag_update.y = flag.body.GetPosition().y;
+			flag_update.unique = 0;
 		}
 		public function Win(state_number:int,team:String){
 			connection.Add (function(socket:Socket)
@@ -377,20 +366,42 @@
 								StateLoop(state_number);
 					  		});
 		}
-		public function Step(state_number:int,id:int = 0, team:String = "netrual"){
-			connection.Add (function(socket:Socket)
-							{
-							 	socket.writeInt(3);
-								Send(state_number,id,team,socket);
-					  		},0,Connection.Nothing);
-		}
+
 		public function StateLoop(state_number:int){
+			var time_of_sent = getTimer();
 			connection.Add (function(socket:Socket)
 							{
+								//Network "me" update
+								var team;
+								if(game.me){
+									team = game.me.team;
+								}else{
+									team = "neutral";
+								}
+								socket.writeInt(3);
+								Send(state_number,id,team,socket);
+								//Action updates
+								while(action_buffer.length){
+									socket.writeInt(5);
+									socket.writeInt(state_number);
+									socket.writeFloat(action_buffer.shift());
+								}
+								//Flag updates
+								if(flag_update){
+									socket.writeInt(8);
+									socket.writeInt(state_number);
+									socket.writeInt(team_map[flag_update.team]);
+									socket.writeFloat(flag_update.x);
+									socket.writeFloat(flag_update.y);
+									socket.writeInt(flag_update.unique);
+									flag_update = null;
+								}
+								//Expect state:
 							 	socket.writeInt(4);
 					  		},4,function(socket:Socket){
 								connection.Continue(Connection.Nothing,socket.readInt(),function(socket:Socket){
 														Get(socket);
+														game.lag_array.push(getTimer() - time_of_sent);
 														if(running && (game.state_number == state_number)){
 															StateLoop(state_number);
 														}
@@ -403,4 +414,11 @@
 		}
 //End actions ..................................................................................
 	}
+}
+
+class FlagAction{
+	public var team:String;
+	public var x:Number;
+	public var y:Number;
+	public var unique:int;
 }

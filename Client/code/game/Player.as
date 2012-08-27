@@ -117,7 +117,7 @@
 				downhill = 0.3;
 				downwards = 1;
 				
-				cooldown = 700;
+				cooldown = 500;
 				power = 30;
 				break;
 				//ranged fire

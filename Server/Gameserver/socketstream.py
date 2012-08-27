@@ -15,10 +15,12 @@ class SocketStream:
     def write(self, fmt, *args):
         try:
             self.file.write(struct.pack('!'+fmt,*args))
-            self.file.flush()
         except:
             self.close()
             raise
     def close(self):
         self.socket.close()
+
+    def flush(self):
+        self.file.flush()
         

@@ -166,9 +166,11 @@ def RegisterPlayer(stream):#read player id, writes 1(success) or 0(fail) or 2(ke
 				del players[id]
 				break
 		stream.write('i',2)
+		stream.flush()
 		time.sleep(1)
 	else:
 		stream.write('i',0)
+		stream.flush()
 		raise Exception("Could not find player in alloted time.")
 		return None
 
@@ -178,14 +180,18 @@ def RegisterPlayer(stream):#read player id, writes 1(success) or 0(fail) or 2(ke
 			player = room.NewPlayer()
 		else:
 			stream.write('i',0)
+			stream.flush()
 			raise Exception("The room was disbanded before the player could join.")
 			return None
+
 	try:
 		stream.write('i',1)
+		stream.flush()
 
 		(sync_request,) = stream.read('i')
 		if sync_request == 1:
 			Synchronize(stream,player,room)
+			stream.flush()
 		else:
 			raise Exception("Player failed to send a synchronize request.")
 			return None
@@ -225,6 +231,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 			while message_id:
 				(message_id,) = stream.read('i')
 				MessageHandler[message_id](stream,player,room)
+				stream.flush()
 		except Exception as error:
 			print("A player has been lost, the error was:",str(error),"while processing the message:",message_id)
 			PlayerLost(player,room)
@@ -289,6 +296,7 @@ MatchmakerHandler = {
 def MatchmakerWriter(stream):
 	while(True):
 		stream.write('ii',1,10)#todo this is priority
+		stream.flush()
 		time.sleep(60)
 
 
@@ -298,6 +306,7 @@ def MatchmakerReader(stream):
 		while message_id:
 			(message_id,) = stream.read('i')
 			MatchmakerHandler[message_id](stream)
+			stream.flush()
 	except Exception as error:
 		print("Connection to matchmaker lost.",str(error))
 	finally:
@@ -316,6 +325,7 @@ if __name__ == "__main__":
 	stream = SocketStream(matchmaker)
 
 	stream.write('32s32s32si',ID,PASSWORD,REGION,PORT)
+	stream.flush()
 	(response,) = stream.read('i')
 	if response == 1:
 		print("Connected to matchmaker.")

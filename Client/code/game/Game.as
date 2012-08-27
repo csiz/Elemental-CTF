@@ -51,6 +51,12 @@
 		public var ready_timer:Number;
 		public var Ready:Function;
 		
+		public var lag_array:Array;
+		public var fps_array:Array;
+		
+		public var lag:Number;
+		public var fps:Number;
+		
 		
 		public function Game(network:Network = null)
         {
@@ -95,6 +101,11 @@
 			//first we clear everything
 			removeChildren();
 			//then we put everything back
+			lag_array = new Array();
+			lag_array.push(0);
+			fps_array = new Array();
+			lag = 0;
+			fps = 0;
 			win = false;
 			ready_timer = 0;
 			Ready = null;
@@ -345,12 +356,6 @@
 					Kill();
 				}
 			}
-			//Network "me" update
-			if(me){
-				network.Step(state_number,me.id,me.team);
-			}else{
-				network.Step(state_number,id,"neutral");
-			}
 			
 			//Loop updates end.................................................................
 			if(me){
@@ -421,8 +426,35 @@
 			}
 			
 			//Message //testing
-			ui.message.text = (1000/timeStep).toFixed(2);
-			//message.text = me.health.toFixed(5);
+			//ui.message.text = (1000/timeStep).toFixed(2);
+			if(me){
+				ui.message.text = me.health.toFixed(0);
+			}
+			//Lag and fps
+			var i;
+			fps_array.push(timeStep);
+			fps = 1;
+			while(fps_array.length > 60){
+				fps_array.shift();
+			}
+			for(i in fps_array){
+				fps += fps_array[i];
+			}
+			fps = (1000/fps) * fps_array.length;
+			ui.fps.text = fps.toFixed(0);
+			
+			lag = 0;
+			while(lag_array.length > 60){
+				lag_array.shift();
+			}
+			for(i in lag_array){
+				lag += lag_array[i];
+			}
+			lag = lag / lag_array.length;
+			ui.lag.text = lag.toFixed(0);
+			
+			
+			
 		}
 		public function Win(team:String){
 			if(!win){
