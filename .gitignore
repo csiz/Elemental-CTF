@@ -97,8 +97,6 @@ DocProject/Help/html
 publish
 
 # Others
-*.swf
-*.log
 [Bb]in
 [Oo]bj
 sql
@@ -163,3 +161,10 @@ pip-log.txt
 
 # Mac crap
 .DS_Store
+
+#############
+## Other
+#############
+
+*.swf
+*.log

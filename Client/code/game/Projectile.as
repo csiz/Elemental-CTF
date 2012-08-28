@@ -40,6 +40,8 @@
 				break;
 			}
 			
+			sprite.x = 20 * body.GetPosition().x;
+			sprite.y = 20 * body.GetPosition().y;
 			game.movie.addChild(sprite);
 			game.network.Add(this);
 		}

@@ -9,8 +9,10 @@
 	
 
 	public class Main extends MovieClip{
-		public const SERVER = "188.24.44.234";
-		public const PORT = 25971;
+		public static const SERVER = "localhost";
+		public static const PORT = 25971;
+		public static const WIDTH = 650;
+		public static const HEIGHT = 400;
 		
 		public var id = new ByteArray();
 		public var password = new ByteArray();

@@ -11,7 +11,8 @@
 	import Box2D.Dynamics.b2Body;
 	import Box2D.Dynamics.Contacts.*;
 	import Box2D.Dynamics.b2Fixture;
-
+	
+	import code.Main;
 	
 	public class Game extends MovieClip{
 		//Game class starts here...............................................................*
@@ -33,6 +34,8 @@
 		public var player_list:Dictionary;
 		public var projectile_list:Dictionary;
 		public var flag_list:Dictionary;
+		public var water_flag:Flag;
+		public var fire_flag:Flag;
 		//newtork data
 		public var network:Network;
 		//user interface
@@ -126,8 +129,10 @@
 			box2d = new Box2d(levels,movie,this);
 
 			box2d.LoadLevel(level);
-			box2d.AddFlag("water");
-			box2d.AddFlag("fire");
+			movie.x = Main.WIDTH / 2 - levels.level[level].width * 20 / 2;
+			movie.y = Main.HEIGHT / 2 - levels.level[level].height * 20 / 2;
+			water_flag = box2d.AddFlag("water");
+			fire_flag = box2d.AddFlag("fire");
 			
 			time = getTimer();
 			running = true;
@@ -358,18 +363,40 @@
 			}
 			
 			//Loop updates end.................................................................
-			if(me){
-				//camera
+			if(me){//flag marker updates
+				var distance;
+				
+				distance = Math.sqrt(Math.pow((water_flag.sprite.x - me.sprite.x),2)+Math.pow((water_flag.sprite.y - me.sprite.y),2));
+				ui.water_flag_marker.x = (water_flag.sprite.x - me.sprite.x) * 50 / distance + me.sprite.x + movie.x;
+				ui.water_flag_marker.y = (water_flag.sprite.y - me.sprite.y) * 50 / distance + me.sprite.y + movie.y;
+				distance -= 700;
+				distance /= 500;
+				ui.water_flag_marker.alpha = ( distance/Math.sqrt(1 + distance * distance) + 1)/2;
+				ui.water_flag_marker.visible = true;
+
+				distance = Math.sqrt(Math.pow((fire_flag.sprite.x - me.sprite.x),2)+Math.pow((fire_flag.sprite.y - me.sprite.y),2));
+				ui.fire_flag_marker.x = (fire_flag.sprite.x - me.sprite.x) * 50 / distance + me.sprite.x + movie.x;
+				ui.fire_flag_marker.y = (fire_flag.sprite.y - me.sprite.y) * 50 / distance + me.sprite.y + movie.y;
+				distance -= 700;
+				distance /= 500;
+				ui.fire_flag_marker.alpha = ( distance/Math.sqrt(1 + distance * distance) + 1)/2;
+				ui.fire_flag_marker.visible = true;
+			}else{
+				ui.water_flag_marker.visible = false;
+				ui.fire_flag_marker.visible = false;
+			}
+			
+			if(me){//camera
 				//Centering screen, slowly
-				//movie.x += ( ( 325  -me.sprite.x - ( me.body.GetLinearVelocity().x * 40 ) ) - movie.x ) * 0.007;
-				//movie.y += ( ( 200  -me.sprite.y - ( me.body.GetLinearVelocity().y * 20 ) ) - movie.y ) * 0.006;
+				//movie.x += ( ( Main.WIDTH / 2  -me.sprite.x - ( me.body.GetLinearVelocity().x * 40 ) ) - movie.x ) * 0.007;
+				//movie.y += ( ( Main.HEIGHT / 2  -me.sprite.y - ( me.body.GetLinearVelocity().y * 20 ) ) - movie.y ) * 0.006;
 				if(control == "keyboard"){
-					movie.x += ( ( 325  -me.sprite.x ) - movie.x ) * speed;
-					movie.y += ( ( 200  -me.sprite.y ) - movie.y ) * speed;
+					movie.x += ( ( Main.WIDTH / 2  -me.sprite.x ) - movie.x ) * speed;
+					movie.y += ( ( Main.HEIGHT / 2  -me.sprite.y ) - movie.y ) * speed;
 				}
 				if(control == "mouse"){
-					movie.x += ( ( ( 325  -me.sprite.x ) - (mouseX - 325)*0.5 ) - movie.x ) * speed;
-					movie.y += ( ( ( 200  -me.sprite.y ) - (mouseY - 200)*0.5 ) - movie.y ) * speed;
+					movie.x += ( ( ( Main.WIDTH / 2  -me.sprite.x ) - (mouseX - Main.WIDTH / 2)*0.5 ) - movie.x ) * speed;
+					movie.y += ( ( ( Main.HEIGHT / 2  -me.sprite.y ) - (mouseY - Main.HEIGHT / 2)*0.5 ) - movie.y ) * speed;
 				}
 				//controls
 				var temp_x:Number;
@@ -420,9 +447,12 @@
 				}
 				if(control == "mouse"){
 					speed = 0.07;
-					movie.x += ( - (mouseX - 325)*0.5 ) * speed;
-					movie.y += ( - (mouseY - 200)*0.5 ) * speed;
+					movie.x += ( - (mouseX - Main.WIDTH / 2)*0.5 ) * speed;
+					movie.y += ( - (mouseY - Main.HEIGHT / 2)*0.5 ) * speed;
 				}
+				//go towards center of level
+				movie.x += ( (Main.WIDTH / 2 - levels.level[level].width * 20 / 2 ) - movie.x ) * 0.003;
+				movie.y += ( (Main.HEIGHT / 2 - levels.level[level].height * 20 / 2 ) - movie.y ) * 0.003;
 			}
 			
 			//Message //testing

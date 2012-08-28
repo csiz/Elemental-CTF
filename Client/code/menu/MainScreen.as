@@ -20,7 +20,7 @@
 			ready = false;
 			functions = new Array;
 			
-			connection = new Connection(main.SERVER,main.PORT);
+			connection = new Connection(Main.SERVER,Main.PORT);
 			
 			//if(main.save.data.id == null){
 				NewID();

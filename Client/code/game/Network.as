@@ -71,8 +71,6 @@
 			
 			
 			functions = new Array();
-			action_buffer = new Array();
-			flag_update = null;
 			ready = false;
 			reference_time = 0;
 			id = 0;
@@ -362,6 +360,9 @@
 								var level = socket.readInt();
 								objects = new Dictionary(true);
 								running = true;
+								action_buffer = new Array();
+								flag_update = null;
+								
 								game.Reload(state_number,level);
 								StateLoop(state_number);
 					  		});

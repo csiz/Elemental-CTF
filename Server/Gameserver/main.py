@@ -18,7 +18,7 @@ from socketstream import *
 from game import * #GameRoom,Player class import
 
 
-SERVER,SERVER_PORT = '188.24.44.234', 25972
+SERVER,SERVER_PORT = 'localhost', 25972
 HOST, PORT = '', 25973 #socket.gethostname(), 25971
 ID = b'1'
 PASSWORD = hashlib.sha256(b'ep2').digest()
