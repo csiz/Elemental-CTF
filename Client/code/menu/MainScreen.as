@@ -31,6 +31,7 @@
 			GetPlayer();
 			name_button.addEventListener(MouseEvent.CLICK, ChangeName);
 			play_button.addEventListener(MouseEvent.CLICK, PlayTheGame);
+			tutorial_button.addEventListener(MouseEvent.CLICK, PlayTutorial);
 			//EndConnection();
 			
 			
@@ -42,6 +43,9 @@
 					  		 	socket.writeInt(6);
 							 	socket.writeBytes(main.id,0,32);
 							 	socket.writeBytes(main.password,0,32);
+								socket.writeBytes(Utils.Standardize("local"),0,32);
+								//socket.writeBytes(Utils.Standardize("csiz room"),0,32);//also modify from 6 to 7
+								
 					  		},4,function(socket:Socket)
 							{
 								if(socket.readInt() == 1){
@@ -64,6 +68,10 @@
 						  	});
 		}
 		
+		public function PlayTutorial(event){
+			main.LoadTutorial();
+		}
+			
 		public function ChangeName(event){
 			main.display_name = Utils.Standardize(name_text.text);
 			connection.Add (function(socket:Socket)

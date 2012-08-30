@@ -4,10 +4,11 @@
 	import Box2D.Dynamics.b2Body;
 	import flash.geom.Point;
 	import Box2D.Common.Math.b2Vec2;
+	import code.game.players.*;
 
 	public class Player{
 		public var game:Game;
-		public var sprite:MovieClip;
+		public var sprite:PlayerAnimate;
 		public var flavor:String;
 		public var body:b2Body;
 		public var id:int;
@@ -68,7 +69,7 @@
 				maxHealth = 301;
 				regen = 10;
 				attack = 100;
-				sprite = new PlayerMeleeFire();
+				sprite = new PlayerMeleeFire(this);
 				speed = 1;
 				airSpeed = 0.3;
 				jump = 1.6;//6 units with boost, 5 without
@@ -88,7 +89,7 @@
 				maxHealth = 301;
 				regen = 10;
 				attack = 100;
-				sprite = new PlayerMeleeWater();
+				sprite = new PlayerMeleeWater(this);
 				speed = 0.8;
 				airSpeed = 0.2;
 				jump = 1.6;//6 units with boost, 5 without
@@ -108,7 +109,7 @@
 				maxHealth = 100;
 				regen = 10;
 				attack = 60;
-				sprite = new PlayerRangedFire();
+				sprite = new PlayerRangedFire(this);
 				speed = 0.6;
 				airSpeed = 0.1;
 				jump = 1.33;//5 units with boost, 4 without
@@ -128,7 +129,7 @@
 				maxHealth = 100;
 				regen = 10;
 				attack = 60;
-				sprite = new PlayerRangedWater();
+				sprite = new PlayerRangedWater(this);
 				speed = 0.6;
 				airSpeed = 0.1;
 				jump = 1.33;//5 units with boost, 4 without
@@ -234,6 +235,7 @@
 						default:
 						trace("No ability for "+flavor+" yet.");
 					}
+					sprite.Action(0);
 				}
 			}
 		}
@@ -266,6 +268,7 @@
 					health = maxHealth;
 				}
 			}
+			sprite.Update(timeStep);
 		}
 		public function Attack(damage:Number, id:int){
 			if(hitTimer > 50){//to exclude double attacks and such, this may present some problems later
@@ -275,13 +278,14 @@
 				}
 			}
 		}
-		public function Kill(){
+		public function Kill(delay:Number = 0){
 			if(alive){
+				sprite.Kill(delay);
 				if(flag){
 					flag.Drop();
 				}
 				alive = false;
-				deathTimer = 0;
+				deathTimer = delay;
 				health = 0;
 			}
 		}

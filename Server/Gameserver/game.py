@@ -27,8 +27,8 @@ class Object:
 		self.health = hp
 
 class Action:
-	def __init__(self,id,time):
-		self.id = id
+	def __init__(self,unique,time):
+		self.unique = unique
 		self.time = time
 
 
@@ -68,8 +68,12 @@ class GameRoom:
 			self.win = 0
 
 	def Win(self,team):
-		self.win = team
-		self.NewLevel()
+		if not self.win:
+			self.win = team
+			new_level_thread = threading.Thread(target = self.NewLevelTimeout)
+			new_level_thread.daemon = True
+			new_level_thread.start()
+			
 
 
 	def NewPlayer(self):
@@ -84,3 +88,6 @@ class GameRoom:
 			del self.players[player.id]
 
 
+	def NewLevelTimeout(self):
+		time.sleep(30)
+		self.NewLevel()

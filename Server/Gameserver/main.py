@@ -33,6 +33,7 @@ class Incoming:
 	def __init__(self,id,room_id):
 		self.id = id
 		self.room_id = room_id
+		self.time = time.time()
 
 players = {}
 players_lock = threading.RLock()
@@ -99,7 +100,7 @@ def SendGameState(stream,player,room):
 	stream.write('iii',state_number,len(actions_to_send),len(players_to_send))
 
 	for a in actions_to_send:
-		stream.write('if',a.id,a.time)
+		stream.write('if',a.unique,a.time)
 	
 	for p in players_to_send:
 		stream.write('iifi', p.id, p.team, p.time, len(p.objects))
@@ -114,12 +115,12 @@ def SendGameState(stream,player,room):
 
 
 def ReceiveAction(stream,player,room):
-	(state_number,time) = stream.read('if')
+	(state_number,unique,time) = stream.read('iif')
 	with room.lock:
 		if state_number == room.state_number:
 			for id in room.players:
 				if id != player.id:
-					room.players[id].actions.append(Action(player.id,time))
+					room.players[id].actions.append(Action(unique,time))
 
 
 def SendGameOverview(stream,player,room):
@@ -293,9 +294,55 @@ MatchmakerHandler = {
 ###############################################################################################################################
 ###############################################################################################################################
 
+def RoomMaintenance():
+	while True:
+		reserved_rooms = set()
+		with players_lock:
+			for player_id in players:
+				if ( time.time() - players[player_id].time ) > 300:
+					del players[player_id]
+				else:
+					reserved_rooms.add(players[player_id].room_id)
+
+		with rooms_lock:
+			for room_id in rooms:
+				if rooms[room_id].players == 0:
+					if ( time.time() - rooms[room_id].time ) > 600:
+						if room_id not in reserved_rooms:
+							del rooms[room_id]
+
+		time.sleep(180)
+
+
+
+
 def MatchmakerWriter(stream):
-	while(True):
-		stream.write('ii',1,10)#todo this is priority
+	while True:
+		stream.write('i',1)#send server state
+
+		priority = 5 #todo, find under how much stress the server is, by magic
+		#10-6 urgent
+		#5-1 nomal
+		#0 no more
+
+		elapsed_time = time.time()
+
+		with rooms_lock:
+			temp_rooms = {}
+			for room_id in rooms:
+				with rooms[room_id].lock:
+					temp_rooms[room_id] = len(rooms[room_id].players)
+					if 0 < len(rooms[room_id].players) < 10:
+						priority = 10
+
+		elapsed_time = time.time() - elapsed_time
+		print("Performance time is about:",elapsed_time)
+		#todo, decrease priority based on elapsed_time
+
+		stream.write('ii',priority,len(temp_rooms))
+		for room_id in temp_rooms:
+			stream.write('32si',room_id,temp_rooms[room_id])
+			
 		stream.flush()
 		time.sleep(60)
 
@@ -340,3 +387,7 @@ if __name__ == "__main__":
 	matchmaker_writer_thread = threading.Thread(target = MatchmakerWriter, args = (stream,))
 	matchmaker_writer_thread.daemon = True
 	matchmaker_writer_thread.start()
+
+	room_maintenance_thread = threading.Thread(target = RoomMaintenance)
+	room_maintenance_thread.daemon = True
+	room_maintenance_thread.start()

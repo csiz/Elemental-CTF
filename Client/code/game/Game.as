@@ -25,6 +25,8 @@
 		public var levels:Levels;
 		public var win:Boolean;
 		//scene data
+		public var main:Main;
+		public var background:MovieClip;
 		public var movie:MovieClip;
 		public var ui:MovieClip;
 		//player data
@@ -38,12 +40,14 @@
 		public var fire_flag:Flag;
 		//newtork data
 		public var network:Network;
+		public const lag_correction = 0;//todo set it to 50 later on
 		//user interface
 		public var w:Boolean;
 		public var a:Boolean;
 		public var s:Boolean;
 		public var d:Boolean;
 		public var space:Boolean;
+		public var tab:Boolean;
 		public var mouse:Boolean;
 		public var control:String;
 		public var speed:Number;
@@ -61,13 +65,10 @@
 		public var fps:Number;
 		
 		
-		public function Game(network:Network = null)
+		public function Game(main:Main,network:Network)
         {
-			if(network){
-				this.network = network;
-			}else{
-				//todo, tutorial/non server game
-			}
+			this.network = network;
+			this.main = main;
 			//init data:
 			id = 0;
 			team = "neutral";
@@ -81,6 +82,7 @@
 			s = false;
 			d = false;
 			space = false;
+			tab = false;
 			mouse = false;
 			control = "keyboard";
 			speed = 0.3;
@@ -115,6 +117,9 @@
 			this.state_number = state_number;
 			this.level = level;
 			
+			background = levels[level].background;
+			addChild(background);
+			
 			movie = new MovieClip();
 			addChild(movie);
 			
@@ -137,7 +142,10 @@
 			time = getTimer();
 			running = true;
 			
-			ui.ChosePlayer();
+			ui.StartPlayerSelect();
+			ui.overview_dialog.win_state.text = "todo";
+			ui.overview_dialog.level.text = level.toString();
+			
 		}
 		
 		public function Spawn(flavor:String,type:String){
@@ -149,37 +157,57 @@
 			}
 		}
 		public function Kill(time:Number = 0 /*todo*/){
-			ready_timer = 3000;//be dead for 10 seconds before respawn
+			ready_timer = 10000;//be dead for 10 seconds before respawn
 			me = null;
-			ui.ChosePlayer();
+			ui.StartPlayerSelect();
 			//todo
 		}
 		
-		public function Add(role:String, flavor:String, x:Number, y:Number, vx:Number, vy:Number, id:int, unique:int, team:String){
+		public function Add(role:String, flavor:String, x:Number, y:Number, vx:Number, vy:Number, id:int, unique:int, team:String,health:Number){
 			//when adding new types, you have to modify 3 things:
 			//in constructor at Player/Projectile make a case:whatever fire...
 			//in Network at flavor_map
 			
 			switch (role){
 				case "player":
-				return box2d.AddPlayer(flavor, id, unique);
+				if(health > 0){
+					return box2d.AddPlayer(flavor, id, unique);
+				}else{
+					return null;
+				}
 				break;
 				case "projectile":
 				return box2d.AddProjectile(new Point(x,y), new Point(vx,vy),flavor,id,unique);
 				break;
 			}
 		}
-		public function Change(obj:*, health:Number, x:Number, y:Number, vx:Number, vy:Number){
+		public function Change(obj:*, health:Number, x:Number, y:Number, vx:Number, vy:Number, elapsed_time:Number){
+			//this modification, may give the player a ver nice illusion of continuity, but it may affect game play. Bascially it will remove the delay between a player launching a projectile and it leaving the player (so there's no window where fire player can't shoot because of lag) however this may lead the player to shoot behind what someone else is doing.
+			elapsed_time -= (lag_correction * 0.001);
+			
+			x += vx * elapsed_time;
+			y += vy * elapsed_time;
+			
+			var delay = 1000 * elapsed_time;//time in miliseconds
+			
 			obj.health = health;
 			if(obj.role == "player"){
 				if(obj.health <= 0){
-					obj.Kill();
+					obj.Kill(delay);
 				}
 			}
 			box2d.ChangePositionAndSpeed(obj.body,x,y,vx,vy);
 		}
-		public function AnimateAction(id:int,elapsed_time:Number){
-			//todo animations
+		public function AnimateAction(unique:int,elapsed_time:Number){
+			var delay = elapsed_time * 1000 - lag_correction;//time in miliseconds
+			var obj = network.objects[unique];
+			if(obj){
+				if(obj.role == "player"){
+					obj.sprite.Action(delay);
+				}
+			}
+			//also in player Kill
+			//and in player Action
 		}
 		
 		protected function GameLoop(event:Event):void
@@ -281,11 +309,13 @@
 												Win(hit.GetUserData().team);
 											}
 											//if the enemy drops the flag and you reach it you still win
-											body.GetUserData().Reset();
+											if(!win){
+												body.GetUserData().Reset();
+											}
 										}
-										if(hit.GetUserData().flag){
-											Win(hit.GetUserData().team);
-										}
+										//if(hit.GetUserData().flag){
+											//Win(hit.GetUserData().team);
+										//}I think this gives a win even if both teams are carrying the flag
 									}
 								}
 							}
@@ -350,9 +380,11 @@
 			//execute ready functions if ready
 			ready_timer -= timeStep;
 			if(ready_timer <= 0){
-				if(Ready != null){
-					Ready();
-					Ready = null;
+				if(!win){
+					if(Ready != null){
+						Ready();
+						Ready = null;
+					}
 				}
 			}
 			//check me state
@@ -455,11 +487,7 @@
 				movie.y += ( (Main.HEIGHT / 2 - levels.level[level].height * 20 / 2 ) - movie.y ) * 0.003;
 			}
 			
-			//Message //testing
-			//ui.message.text = (1000/timeStep).toFixed(2);
-			if(me){
-				ui.message.text = me.health.toFixed(0);
-			}
+			
 			//Lag and fps
 			var i;
 			fps_array.push(timeStep);
@@ -483,14 +511,31 @@
 			lag = lag / lag_array.length;
 			ui.lag.text = lag.toFixed(0);
 			
+			//ui.overview
+			if(tab){
+				ui.ShowOverview();
+			}else{
+				ui.HideOverview();
+			}
 			
+			if(win){
+				ui.CancelPlayerSelect();
+				ui.ShowOverview();
+			}
+			//Message //testing
+			//ui.message.text = (1000/timeStep).toFixed(2);
+			if(me){
+				ui.message.text = me.health.toFixed(0);
+			}
 			
 		}
 		public function Win(team:String){
 			if(!win){
-				trace("Team: " + team + " won!");
+				ui.overview_dialog.win_state.text = ("Team: " + team + " won!");
 				network.Win(state_number,team);
 				win = true;
+				ui.CancelPlayerSelect();
+				ui.ShowOverview();
 			}
 		}
 		
@@ -526,6 +571,9 @@
 				space=true;
 				control = "keyboard";
 				break;
+				case Keyboard.TAB:
+				tab = true;
+				break;
 			}
 		}
 		
@@ -551,6 +599,9 @@
 				break;
 				case Keyboard.SPACE:
 				space=false;
+				break;
+				case Keyboard.TAB:
+				tab = false;
 				break;
 			}
 		}

@@ -42,16 +42,26 @@
 			Clear();
 			var network:Network = new Network();
 			network.Connect(address,port,id);
-			var game = new Game(network);
+			var game = new Game(this,network);
 			network.OnReady(function(){Add(game);game.Start();stage.focus = game});
 		}
-		public function Clear(){
+		
+		public function LoadTutorial(){
+			Clear();
+			var network:Network = new Network();
+			var game = new Game(this,network);
+			Add(game);
+			game.Start();
+			game.Reload(0,0);//load state number 0 and lvl 0 as a tutorial
+			stage.focus = game
+		}
+		private function Clear(){
 			if(screen){
 				removeChild(screen);
 				screen = null;
 			}
 		}
-		public function Add(what:MovieClip){
+		private function Add(what:MovieClip){
 			if(!screen){
 				screen = what;
 				addChild(screen);

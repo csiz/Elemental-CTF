@@ -1,6 +1,7 @@
 ﻿package code.game
 {	
 	import flash.geom.Point;
+	import flash.display.MovieClip;
 
 	public class Levels
 	{
@@ -62,6 +63,7 @@
 									 "OBBBBOOOOLLLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
 			level[0].width = level[0].map[0].length;
 			level[0].height = level[0].map.length;
+			level[0].background = new MovieClip();//todo
 									 
 		}
 		

@@ -53,9 +53,9 @@ def ChangeLogin(stream):
 		stream.write('i',0)
 
 def FindGame(stream):
-	(id, password) = stream.read('32s32s')
+	(id, password, region) = stream.read('32s32s32s')
 	if database.Check(id,password):
-		result = matchmaker.Find(id)
+		result = matchmaker.Find(id,region)
 		if result:
 			(address,port,room) = result
 			stream.write('i32si32s',1,address,port,room)
@@ -64,7 +64,17 @@ def FindGame(stream):
 	else:
 		stream.write('i',0) #fail
 
-
+def FindRoom(stream):
+	(id, password, region, room_id) = stream.read('32s32s32s32s')
+	if database.Check(id,password):
+		result = matchmaker.FindRoom(id,room_id,region)
+		if result:
+			(address,port,room) = result
+			stream.write('i32si32s',1,address,port,room)
+		else:
+			stream.write('i',2) #keep trying
+	else:
+		stream.write('i',0) #fail
 
 ###############################################################################################################################
 ###############################################################################################################################
@@ -93,9 +103,12 @@ MessageHandler = {#reads, returns:
 	#0 or 1
 
 	6:FindGame,
-	#id, password
+	#id, password, region
 	#0 or 1 or 2, then address, port, room id
-	#todo add 7, process queue requests, by invoking matchmaker, custom map
+
+	7:FindRoom,
+	#id, password, region, room_id
+	#0 or 1 or 2, then address, port, room id
 
 	#remember to also add in DDOS prevention below
 }
@@ -113,6 +126,7 @@ MessageCost = {
 	4:1,
 	5:50,
 	6:1,
+	7:5,
 }
 CostCap = 3600
 IPList = {}

@@ -27,7 +27,7 @@
 		
 		public var reference_time:Number;
 		
-		public var action_buffer:Array;
+		public var action_buffer:Number;
 		public var flag_update:FlagAction;
 		
 		public function Time():Number{
@@ -165,7 +165,7 @@
 		}
 		public function Action(state_number:int,id:int){
 			if(id == game.id){
-				action_buffer.push(Time());
+				action_buffer = Time();
 			}
 		}
 //End functions that add and remove things......................................................
@@ -185,7 +185,7 @@
 			socket.writeInt(team_map[team]);
 			socket.writeFloat(Time());
 			socket.writeInt(counter);
-			
+
 			for(obj in objects){
 				if(objects[obj]){
 					if(objects[obj].id == id){
@@ -210,9 +210,9 @@
 			
 			//read and process the actions
 			for(;number_of_actions > 0; number_of_actions--){
-				var id = socket.readInt();
+				var temp_unique = socket.readInt();
 				var time = socket.readFloat();
-				game.AnimateAction(id,Time()-time);
+				game.AnimateAction(temp_unique,Time()-time);
 			}
 			//read and process the players
 			var obj:*;
@@ -241,27 +241,22 @@
 					
 					var delay = Time() - time_of_update;
 					
-					//todo
-					//this modification, may give the player a ver nice illusion of continuity, but it may affect game play. Bascially it will remove the delay between a player launching a projectile and it leaving the player (so there's no window where fire player can't shoot because of lag) however this may lead the player to shoot behind what someone else is doing.
-					delay -= (50 * 0.001);
 					
-					x += vx * delay;
-					y += vy * delay;
 					
 					if(objects[unique]){//if it exists in the list
 						obj = objects[unique];//easy access
 						//check for consistency
 						if( (obj.role == role) && (obj.flavor == flavor) && (obj.id == player_id))
 						{
-							game.Change(obj,health,x,y,vx,vy);
+							game.Change(obj,health,x,y,vx,vy,delay);
 							//everything is alright, continue
 						}else{//collision happened, stuff is weird here
 							trace("Network: you basically won the lottery.");
 						}
 					}else{//create it otherwise
-						obj = game.Add(role,flavor,x,y,vx,vy,player_id, unique, player_team);
+						obj = game.Add(role,flavor,x,y,vx,vy,player_id, unique, player_team, health);
 						if(obj){
-							game.Change(obj,health,x,y,vx,vy);
+							game.Change(obj,health,x,y,vx,vy,delay);
 						}
 					}
 					
@@ -335,12 +330,14 @@
 			flag_update.unique = 0;
 		}
 		public function Win(state_number:int,team:String){
-			connection.Add (function(socket:Socket)
-							{
-							 	socket.writeInt(9);
-								socket.writeInt(state_number);
-								socket.writeInt(team_map[team]);
-					  		},0,Connection.Nothing);
+			if(connection){
+				connection.Add (function(socket:Socket)
+								{
+									socket.writeInt(9);
+									socket.writeInt(state_number);
+									socket.writeInt(team_map[team]);
+								},0,Connection.Nothing);
+			}
 		}
 		public function Start(game:Game){
 			this.game = game;
@@ -348,24 +345,31 @@
 		}
 		
 		public function Load(){
-			running = false;
-			game.running = false;
-			
-			connection.Add (function(socket:Socket)
-							{
-							 	socket.writeInt(7);
-					  		},8,function(socket:Socket)
-							{
-							 	var state_number = socket.readInt();
-								var level = socket.readInt();
-								objects = new Dictionary(true);
-								running = true;
-								action_buffer = new Array();
-								flag_update = null;
-								
-								game.Reload(state_number,level);
-								StateLoop(state_number);
-					  		});
+			if(connection){
+				running = false;
+				game.running = false;
+				
+				connection.Add (function(socket:Socket)
+								{
+									socket.writeInt(7);
+								},8,function(socket:Socket)
+								{
+									var state_number = socket.readInt();
+									var level = socket.readInt();
+									objects = new Dictionary(true);
+									running = true;
+									action_buffer = 0;
+									flag_update = null;
+									
+									game.Reload(state_number,level);
+									StateLoop(state_number);
+								});
+			}else{//no connection means its in tutorial mode, so do nothing
+				objects = new Dictionary(true);
+				running = true;
+				action_buffer = 0;
+				flag_update = null;
+			}
 		}
 
 		public function StateLoop(state_number:int){
@@ -382,11 +386,15 @@
 								socket.writeInt(3);
 								Send(state_number,id,team,socket);
 								//Action updates
-								while(action_buffer.length){
-									socket.writeInt(5);
-									socket.writeInt(state_number);
-									socket.writeFloat(action_buffer.shift());
+								if(game.me){
+									if(action_buffer){
+										socket.writeInt(5);
+										socket.writeInt(state_number);
+										socket.writeInt(game.me.unique);
+										socket.writeFloat(action_buffer);
+									}
 								}
+								action_buffer = 0;
 								//Flag updates
 								if(flag_update){
 									socket.writeInt(8);
