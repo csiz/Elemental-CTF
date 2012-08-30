@@ -82,7 +82,7 @@
 						//end brick
 						case "bouncy":
 						boxDef.friction = 0.3;
-						boxDef.restitution = 0.5;
+						boxDef.restitution = 0.9;
 						bodyDef.userData = new Bouncy();
 						boxDef.userData.role = "brick";
 						boxDef.userData.flavor = "bouncy";

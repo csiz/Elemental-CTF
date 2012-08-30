@@ -17,8 +17,8 @@
 			map = new Object();
 			map["O"] = "brick";
 			map["B"] = "bouncy";
-			map["I"] = "ice";//todo
-			map["L"] = "lava";//todo
+			map["I"] = "ice";
+			map["L"] = "lava";
 			
 			map["."] = "space";
 			map[" "] = "space";
@@ -28,42 +28,54 @@
 			
 			map["2"] = "water";
 			map["b"] = "water flag";
+
+
 			
 			
 			
 			level[0] = new Object();
 			
-			level[0].map = new Array("OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
-								 	 "O                                                                                            O",
+			level[0].map = new Array("OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOIIIIIIIIIIII",
+								 	 "O                                                                                   III      I",
+									 "O                                                                                    I       I",
+									 "O                                                                                        ... I",
+									 "O      OOOOOOOOOOOOOOOOOOOOOOOOO   OOOOOOOOOOOOOOO   OOOOOOOOOOOOOO                      .2. I",
+									 "O     OOOOOOOOOOOOOOOOOOOOOOOOO   OOOOOOOOOOOOOOOOO   OOOOOOOOOOOOOO                II   ... I",
+									 "O                                                                                  IIIIIIIIIII",
 									 "O                                                                                            O",
 									 "O                                                                                            O",
-									 "O                                                                     OO                     O",
-									 "O...     OOOOO    OOO                                                                        O",
-									 "O.1.                    OOO                                     OO                           O",
-									 "O...                         OOO                                                             O",
-									 "O                                                        OO                                  O",
-									 "O                                  OOO                                                       O",
-									 "O                                                                   ...                      O",
-									 "O                                         OOO                       .2.                      O",
-									 "O                                                 OOO               ...                      O",
-									 "O                                                  O                                         O",
-									 "O                                         O                                                  O",
-									 "O                                        OOO            OOOOOOO                              O",
-									 "O                                                                    III                     O",
-									 "O                                                                     I                      O",
-									 "O                                                                                            O",
-									 "O                                                                    b                       O",
-									 "O                                                              OOOOOOOOOOOO OOOOOOOO         O",
-									 "O                                                             OOOO                           O",
-									 "O                                                       a    OOOO                            O",
-									 "O                                                  OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO         O",
-									 "O                                                 OOOOOO                                   OOO",
-									 "O                                                OOOOOO                                      O",
-									 "O                                               OOOOOO                                       O",
-									 "OBBBBOOOOLLLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
+									 "O                          O                              O                                  O",
+									 "O                          OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO                                  O",
+									 "O                                            O                                               O",
+									 "O                                            O                                               O",
+									 "O                                            O                                               O",
+									 "O                                            O                                           b   O",
+									 "OOBBBOOOOOOOOOOOOOOOOO                       O                   OOOOBBBOOOOOOOOOOOOOOOOOOOOOOO",
+									 "O                                            O                  OO                           O",
+									 "O                                            O                                               O",
+									 "O               OOOOOOOOOOOOOOO              OO                                              O",
+									 "O                                            OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO    O",
+									 "O                                                                               O       OO   O",
+									 "O                                                                               O            O",
+									 "OOOOOOOOOOOOOOOO                                                                O            O",
+									 "O                                                                               O     OOOOOOOO",
+									 "O                                                                               O    OO      O",
+									 "O                                                                               O            O",
+									 "O               OOOOOOOOOOOOOOO                                                 O            O",
+									 "O                             OOOOOOOO                                          OOOOOOOO     O",
+									 "O                                    OOOOOO                                            OO    O",
+									 "O                                         OO                                                 O",
+									 "O   a                                      OO                                                O",
+									 "OOOOOOOOOOOOOOOOOOOOOOO                                                                      O",
+									 "O          LLOOO    OOOO                                                                     O",
+									 "L           LLL             OOOOOO             OOOOO    OOOO IIII LLLL IIII LLLL OOOO    OOOOO",
+									 "L  ...       L                                OOOO                                           O",
+									 "L  .1.           LL                          OOOOO  .                                     .  O",
+									 "L  ...          LLLL                        OOOOOO                                           O",
+									 "LLLLLLLLLLLLLLLLLLLLLLLLLLLLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
 			level[0].width = level[0].map[0].length;
 			level[0].height = level[0].map.length;
-			level[0].background = new MovieClip();//todo
+			level[0].background = new TutorialBackground();
 									 
 		}
 		

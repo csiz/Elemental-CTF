@@ -117,11 +117,12 @@
 			this.state_number = state_number;
 			this.level = level;
 			
-			background = levels[level].background;
-			addChild(background);
-			
+
 			movie = new MovieClip();
 			addChild(movie);
+			
+			background = levels.level[level].background;
+			movie.addChild(background);
 			
 			ui = new UI(this);
 			addChild(ui);
