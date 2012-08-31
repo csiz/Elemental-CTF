@@ -10,7 +10,7 @@
 	
 
 	public class Main extends MovieClip{
-		public static const SERVER = "localhost";
+		public static const SERVER = "188.24.42.67";
 		public static const PORT = 25971;
 		public static const WIDTH = 650;
 		public static const HEIGHT = 400;
