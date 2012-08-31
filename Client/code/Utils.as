@@ -23,10 +23,6 @@
 
 			return bytes;
 		}
-		
-		public static function ReplaceChar(str:String, x:int, what:String):String{
-			return (str.slice(0,x) + what + str.slice(x+1));
-		}
 	}
 	
 }

@@ -19,7 +19,6 @@
 			map["B"] = "bouncy";
 			map["I"] = "ice";
 			map["L"] = "lava";
-			map["X"] = "space";//its used for marking purposes
 			
 			map["."] = "space";
 			map[" "] = "space";
