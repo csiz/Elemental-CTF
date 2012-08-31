@@ -117,12 +117,11 @@
 			this.state_number = state_number;
 			this.level = level;
 			
+			background = levels.level[level].background;
+			addChild(background);
 
 			movie = new MovieClip();
 			addChild(movie);
-			
-			background = levels.level[level].background;
-			movie.addChild(background);
 			
 			ui = new UI(this);
 			addChild(ui);
@@ -523,6 +522,16 @@
 				ui.CancelPlayerSelect();
 				ui.ShowOverview();
 			}
+			//background
+			background.x = movie.x;
+			background.y = movie.y;
+			//frame rate optimization:
+			for (var i = 0; i < movie.numChildren; i++){
+				var clip = movie.getChildAt(i);
+				clip.visible = ((clip.x+movie.x > -50) && (clip.x+movie.x < 700) && (clip.y+movie.y > -50) && (clip.y+movie.y < 450));
+			}
+			
+			
 			//Message //testing
 			//ui.message.text = (1000/timeStep).toFixed(2);
 			if(me){
