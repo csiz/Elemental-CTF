@@ -33,6 +33,9 @@
 		public var maxHealth:Number;
 		public var attack:Number;
 		public var attackTimer:Number;
+		public var energy:Number;
+		public var energy_cost:Number;
+		public var energy_regen:Number;
 		public var deathTimer:Number;
 		public var alive:Boolean;
 		public var regen:Number;
@@ -60,6 +63,8 @@
 			attackTimer = 0;
 			hitTimer = 0;
 			deathTimer = 0;
+			energy = 0;
+			energy_regen = 10;
 			alive = true;
 			switch (flavor)
 			{
@@ -79,6 +84,7 @@
 				downwards = 1;
 				
 				cooldown = 4000;
+				energy_cost = 50;
 				power = 35;
 				break;
 				//melee fire
@@ -99,6 +105,7 @@
 				downwards = 2;
 				
 				cooldown = 1000;
+				energy_cost = 30;
 				power = 20;
 				break;
 				//melee water
@@ -119,6 +126,7 @@
 				downwards = 1;
 				
 				cooldown = 500;
+				energy_cost = 20;
 				power = 30;
 				break;
 				//ranged fire
@@ -139,6 +147,7 @@
 				downwards = 1;
 				
 				cooldown = 150;//here
+				energy_cost = 10;
 				power = 25;
 				break;
 				//ranged fire
@@ -210,32 +219,35 @@
 				if(l==0){
 					l=1;//no divide by 0 errors
 				}
-				if(actionSince > cooldown){
-					actionSince = 0;
-					game.network.Action(game.state_number,this.id);
-					switch (flavor)
-					{
-						case "melee fire":
-						body.ApplyImpulse(new b2Vec2(power * x/l * body.GetMass(), power * y/l * body.GetMass() ),new b2Vec2(0, 0));
-						break;
-						//melee fire
-						case "melee water":
-						body.ApplyImpulse(new b2Vec2(power * x/l * body.GetMass(), power * y/l * body.GetMass() ),new b2Vec2(0, 0));
-						break;
-						//melee water
-						case "ranged fire":
-						game.box2d.AddProjectile(new Point(body.GetPosition().x,body.GetPosition().y),new Point(power * x/l + body.GetLinearVelocity().x, power * y/l + body.GetLinearVelocity().y), "projectile fire",id);
-						break;
-						//ranged fire
-						case "ranged water":
-						game.box2d.AddProjectile(new Point(body.GetPosition().x,body.GetPosition().y),new Point(power * x/l + body.GetLinearVelocity().x, power * y/l + body.GetLinearVelocity().y), "projectile water",id);
-						break;
-						//ranged fire
-						
-						default:
-						trace("No ability for "+flavor+" yet.");
+				if(energy >= energy_cost){
+					if(actionSince > cooldown){
+						actionSince = 0;
+						energy -= energy_cost;
+						game.network.Action(game.state_number,this.id);
+						switch (flavor)
+						{
+							case "melee fire":
+							body.ApplyImpulse(new b2Vec2(power * x/l * body.GetMass(), power * y/l * body.GetMass() ),new b2Vec2(0, 0));
+							break;
+							//melee fire
+							case "melee water":
+							body.ApplyImpulse(new b2Vec2(power * x/l * body.GetMass(), power * y/l * body.GetMass() ),new b2Vec2(0, 0));
+							break;
+							//melee water
+							case "ranged fire":
+							game.box2d.AddProjectile(new Point(body.GetPosition().x,body.GetPosition().y),new Point(power * x/l + body.GetLinearVelocity().x, power * y/l + body.GetLinearVelocity().y), "projectile fire",id);
+							break;
+							//ranged fire
+							case "ranged water":
+							game.box2d.AddProjectile(new Point(body.GetPosition().x,body.GetPosition().y),new Point(power * x/l + body.GetLinearVelocity().x, power * y/l + body.GetLinearVelocity().y), "projectile water",id);
+							break;
+							//ranged fire
+							
+							default:
+							trace("No ability for "+flavor+" yet.");
+						}
+						sprite.Action(0);
 					}
-					sprite.Action(0);
 				}
 			}
 		}
@@ -263,10 +275,11 @@
 				}
 			}
 			if(alive){
+				energy += energy_regen * timeStep/1000;
+				energy = Math.min(energy,100);
+				
 				health += regen * timeStep/1000;
-				if(health > maxHealth){
-					health = maxHealth;
-				}
+				health = Math.min(maxHealth,health);
 			}
 			sprite.Update(timeStep);
 		}

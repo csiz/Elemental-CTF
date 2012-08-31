@@ -5,6 +5,7 @@
 	import code.game.Network;
 	import flash.utils.ByteArray;
 	import flash.net.SharedObject;
+	import code.menu.TutorialSlides;
 	
 	
 
@@ -48,12 +49,7 @@
 		
 		public function LoadTutorial(){
 			Clear();
-			var network:Network = new Network();
-			var game = new Game(this,network);
-			Add(game);
-			game.Start();
-			game.Reload(0,0);//load state number 0 and lvl 0 as a tutorial
-			stage.focus = game
+			Add(new TutorialSlides(this));
 		}
 		private function Clear(){
 			if(screen){

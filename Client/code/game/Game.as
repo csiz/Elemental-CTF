@@ -345,11 +345,23 @@
 										if(fixture_hit.GetUserData().flavor == "ice"){
 											if(body.GetUserData().team == "fire"){
 												body.GetUserData().Kill();
+											}else if(body.GetUserData().flag){
+												if(body.GetUserData().flag.team == "fire"){
+													if(!win){
+														body.GetUserData().flag.Reset();
+													}
+												}
 											}
 										}
 										if(fixture_hit.GetUserData().flavor == "lava"){
 											if(body.GetUserData().team == "water"){
 												body.GetUserData().Kill();
+											}else if(body.GetUserData().flag){
+												if(body.GetUserData().flag.team == "water"){
+													if(!win){
+														body.GetUserData().flag.Reset();
+													}
+												}
 											}
 										}
 									}
@@ -526,7 +538,7 @@
 			background.x = movie.x;
 			background.y = movie.y;
 			//frame rate optimization:
-			for (var i = 0; i < movie.numChildren; i++){
+			for (i = 0; i < movie.numChildren; i++){
 				var clip = movie.getChildAt(i);
 				clip.visible = ((clip.x+movie.x > -50) && (clip.x+movie.x < 700) && (clip.y+movie.y > -50) && (clip.y+movie.y < 450));
 			}
@@ -535,7 +547,7 @@
 			//Message //testing
 			//ui.message.text = (1000/timeStep).toFixed(2);
 			if(me){
-				ui.message.text = me.health.toFixed(0);
+				ui.message.text = me.energy.toFixed(0);
 			}
 			
 		}

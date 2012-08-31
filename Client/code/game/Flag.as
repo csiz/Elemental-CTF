@@ -37,12 +37,14 @@
 				sprite = new FlagFire();
 				unique = 1;
 				flavor = "flag fire";
+				team = "fire";
 				pos = game.levels.GetSpawn(game.level,"fire flag");
 				break;
 				case "water":
 				sprite = new FlagWater();
 				unique = 2;
 				flavor = "flag water";
+				team = "water";
 				pos = game.levels.GetSpawn(game.level,"water flag");
 				break;
 				default:
@@ -79,6 +81,10 @@
 			game.network.DropFlag(game.state_number,this);
 		}
 		public function Reset(){
+			if(carry){
+				carry.flag = null;
+				carry = null;
+			}
 			body.SetPosition(origin);
 			game.network.ResetFlag(game.state_number,this);
 		}
