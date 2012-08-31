@@ -54,13 +54,16 @@
 		
 		public function LoadLevel(lvl:int)
 		{
+			var level = new Levels().level[lvl];
+			
 			var body:b2Body;
 			var bodyDef:b2BodyDef;
 			var boxDef:b2FixtureDef;
+			var clip:MovieClip;
 			
-			for(var y = 0;y < levels.level[lvl].height;y++)
+			for(var y = 0;y < level.height;y++)
 			{
-				for(var x = 0;x < levels.level[lvl].width;x++)
+				for(var x = 0;x < level.width;x++)
 				{
 					//general
 					bodyDef = new b2BodyDef();
@@ -75,15 +78,15 @@
 						case "brick":
 						boxDef.friction = 0.3;
 						boxDef.restitution = 0;
-						bodyDef.userData = new Brick();
+						clip = new Brick();
 						boxDef.userData.role = "brick";
-						boxDef.userData.flavor = "normal";
+						boxDef.userData.flavor = "brick";
 						break;
 						//end brick
 						case "bouncy":
 						boxDef.friction = 0.3;
 						boxDef.restitution = 0.9;
-						bodyDef.userData = new Bouncy();
+						clip = new Bouncy();
 						boxDef.userData.role = "brick";
 						boxDef.userData.flavor = "bouncy";
 						break;
@@ -91,7 +94,7 @@
 						case "ice":
 						boxDef.friction = 0.1;
 						boxDef.restitution = 0;
-						bodyDef.userData = new Ice();
+						clip = new Ice();
 						boxDef.userData.role = "brick";
 						boxDef.userData.flavor = "ice";
 						break;
@@ -99,7 +102,7 @@
 						case "lava":
 						boxDef.friction = 0.7;
 						boxDef.restitution = 0;
-						bodyDef.userData = new Lava();
+						clip = new Lava();
 						boxDef.userData.role = "brick";
 						boxDef.userData.flavor = "lava";
 						break;
@@ -153,15 +156,53 @@
 							bodyDef.userData.gotoAndStop("SW");
 							break;
 							case "normal":
-							default:
-							boxDef.userData.orientation = "normal";
+							var size = 1;
+							for(var temp_x = x+1;temp_x < level.width;temp_x++){//go as far right as you can, so you can make a big block and not a hundred small ones
+								if((levels.GetType(lvl, temp_x, y) == boxDef.userData.flavor) &&(levels.GetOrientation(lvl, temp_x, y) == "normal") ){
+									size++;
+									var temp_clip;
+									switch(levels.GetType(lvl, temp_x, y)){
+										case "brick":
+										temp_clip = new Brick();
+										break;
+										case "bouncy":
+										temp_clip = new Bouncy();
+										break;
+										case "lava":
+										temp_clip = new Lava();
+										break;
+										case "ice":
+										temp_clip = new Ice();
+										break;
+									}
+									temp_clip = 20 * temp_x;
+									temp_clip = 20 * y;
+									movie.addChild(temp_clip)
+									level.Mark(lvl,temp_x,y);
+								}else{
+									break;
+								}
+							}
+							
+							if(size > 1){
+								boxDef.shape = b2PolygonShape.AsArray(
+									[new b2Vec2(-0.5,-0.5),
+									 new b2Vec2(0.5,-0.5),
+									 new b2Vec2(0.5,0.5)],
+									 
+									 4);
+								
+							}
 							boxDef.shape = b2PolygonShape.AsBox(0.5, 0.5);
+							boxDef.userData.orientation = "normal";
 							break;
+							default:
+							trace("Box2D.LoadLevel: Well, crap!");
 						}
 						//other
-						bodyDef.userData.x = 20 * x;
-						bodyDef.userData.y = 20 * y;
-						movie.addChild(bodyDef.userData);
+						clip = 20 * x;
+						clip = 20 * y;
+						movie.addChild(clip);
 						//add it
 						body = m_world.CreateBody(bodyDef);
 						body.CreateFixture(boxDef);
