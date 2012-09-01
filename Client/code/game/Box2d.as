@@ -332,7 +332,7 @@
 			
 			body.SetUserData(new Player(body,flavor,id,unique,game));
 			if(pos == null){
-				pos = game.levels.GetSpawn(game.level,body.GetUserData().team); 
+				pos = game.levels.GetSpawn(game.level,body.GetUserData().team);
 			}
 			body.SetPosition(new b2Vec2(pos.x,pos.y));
 			update_list[body] = body.GetUserData().sprite;
@@ -536,6 +536,7 @@
 		public function ChangePositionAndSpeed(body:b2Body, x:Number, y:Number, vx:Number, vy:Number){
 			body.SetPosition(new b2Vec2(x,y));
 			body.SetLinearVelocity(new b2Vec2(vx,vy));
+			body.SetAwake(true);
 		}
 		//end helper functions
 	}

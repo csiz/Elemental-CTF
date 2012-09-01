@@ -13,6 +13,7 @@ class Player:
 		self.objects = []
 		#incoming information
 		self.actions = []
+		self.damages = []
 
 
 class Object:
@@ -30,6 +31,13 @@ class Action:
 	def __init__(self,unique,time):
 		self.unique = unique
 		self.time = time
+
+class Damage:
+	def __init__(self,time,damage,unique_target,unique_source):
+		self.time = time
+		self.damage = damage
+		self.target = unique_target
+		self.source = unique_source
 
 
 

@@ -28,6 +28,7 @@
 		public var reference_time:Number;
 		
 		public var action_buffer:Number;
+		public var damage_buffer:Array;
 		public var flag_update:FlagAction;
 		
 		public function Time():Number{
@@ -91,7 +92,6 @@
 										{
 											round_trip_time = (getTimer()*0.001) - round_trip_time;
 											reference_time = socket.readFloat() + round_trip_time/2 - (getTimer()*0.001);
-											trace("Lag received as:",round_trip_time/2);
 											connection.Continue(function(socket:Socket)
 																{
 																	socket.writeInt(2);
@@ -205,14 +205,23 @@
 		public function Get(socket:Socket){
 			var state_number = socket.readInt();
 			var number_of_actions = socket.readInt();
+			var number_of_damages = socket.readInt();
 			var number_of_players = socket.readInt();
 			
 			
 			//read and process the actions
 			for(;number_of_actions > 0; number_of_actions--){
 				var temp_unique = socket.readInt();
-				var time = socket.readFloat();
-				game.AnimateAction(temp_unique,Time()-time);
+				var action_time = socket.readFloat();
+				game.AnimateAction(temp_unique,Time()-action_time);
+			}
+			//read and process the actions
+			for(;number_of_damages > 0; number_of_damages--){
+				var damage_time = socket.readFloat();
+				var damage = socket.readFloat();
+				var target = socket.readInt();
+				var source = socket.readInt();
+				game.Damage(damage_time,damage,target,source);
 			}
 			//read and process the players
 			var obj:*;
@@ -256,7 +265,7 @@
 					}else{//create it otherwise
 						obj = game.Add(role,flavor,x,y,vx,vy,player_id, unique, player_team, health);
 						if(obj){
-							game.Change(obj,health,x,y,vx,vy,delay);
+							game.Set(obj,health,x,y,vx,vy,delay);
 						}
 					}
 					
@@ -308,6 +317,19 @@
 				Load();
 			}
 		}
+		public function Damage(state_number:int,damage:Number,target_unique:int,source_unique:int){
+			var temp = new DamageData();
+			temp.time = Time();
+			temp.target = target_unique;
+			
+			temp.source = source_unique;
+			temp.damage = damage;
+			if(objects[target_unique]){
+				temp.target_id = objects[target_unique].id;
+				damage_buffer.push(temp);
+			}
+		}
+		
 		public function DropFlag(state_number:int,flag:Flag){
 			flag_update = new FlagAction();
 			flag_update.team = flag.team;
@@ -316,11 +338,16 @@
 			flag_update.unique = -1;
 		}
 		public function PickFlag(state_number:int,flag:Flag){
-			flag_update = new FlagAction();
-			flag_update.team = flag.team;
-			flag_update.x = flag.body.GetPosition().x;
-			flag_update.y = flag.body.GetPosition().y;
-			flag_update.unique = flag.carry.unique;
+			if(game.me){
+				if(flag.carry.unique == game.me.unique){
+					flag_update = new FlagAction();
+					flag_update.team = flag.team;
+					flag_update.x = flag.body.GetPosition().x;
+					flag_update.y = flag.body.GetPosition().y;
+					flag_update.unique = flag.carry.unique;
+				}
+			}
+			
 		}
 		public function ResetFlag(state_number:int,flag:Flag){
 			flag_update = new FlagAction();
@@ -359,6 +386,7 @@
 									objects = new Dictionary(true);
 									running = true;
 									action_buffer = 0;
+									damage_buffer = new Array();
 									flag_update = null;
 									
 									game.Reload(state_number,level);
@@ -395,6 +423,17 @@
 									}
 								}
 								action_buffer = 0;
+								//Damage updates
+								while(damage_buffer.length){
+									var damage = damage_buffer.shift();
+									socket.writeInt(10);
+									socket.writeInt(state_number);
+									socket.writeFloat(damage.time);
+									socket.writeFloat(damage.damage);
+									socket.writeInt(damage.target_id);
+									socket.writeInt(damage.target);
+									socket.writeInt(damage.source);
+								}
 								//Flag updates
 								if(flag_update){
 									socket.writeInt(8);
@@ -405,15 +444,20 @@
 									socket.writeInt(flag_update.unique);
 									flag_update = null;
 								}
+								//Synchronyze:
+								socket.writeInt(1);
 								//Expect state:
 							 	socket.writeInt(4);
-					  		},4,function(socket:Socket){
+					  		},8,function(socket:Socket){
+								var sync_time = socket.readFloat();
 								connection.Continue(Connection.Nothing,socket.readInt(),function(socket:Socket){
 														Get(socket);
 														game.lag_array.push(getTimer() - time_of_sent);
 														if(running && (game.state_number == state_number)){
 															StateLoop(state_number);
 														}
+														var round_trip_time = (getTimer()*0.001) - time_of_sent * 0.001;
+														reference_time = sync_time + round_trip_time/2 - (getTimer()*0.001);
 													});
 							});
 		}
@@ -430,4 +474,12 @@ class FlagAction{
 	public var x:Number;
 	public var y:Number;
 	public var unique:int;
+}
+
+class DamageData{
+	public var damage:Number;
+	public var source:int;
+	public var target:int;
+	public var target_id:int;
+	public var time:Number;
 }

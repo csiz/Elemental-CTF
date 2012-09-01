@@ -283,11 +283,20 @@
 			}
 			sprite.Update(timeStep);
 		}
-		public function Attack(damage:Number, id:int){
+		public function Attack(damage:Number, id:int,unique:int){
 			if(hitTimer > 50){//to exclude double attacks and such, this may present some problems later
 				health -= damage;
 				if(health <= 0){
 					Kill();
+				}
+				
+				//if i am the one being attacked:
+				if(game.me == this){
+					game.damage_control[unique] = game.network.Time();
+				}
+				//if i am the one attacking:
+				if(game.id == id){
+					game.network.Damage(game.state_number,damage,this.unique,unique);
 				}
 			}
 		}

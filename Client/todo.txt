@@ -1,0 +1,21 @@
+think about the reset flag thing, you may reset the flag for someone else, causing confusion
+
+when you reset the flag with NetworkUpdate, the contacts still remain. So if someone else picks the flag, because of lag, it will remain on them.
+
+work on the illusion of no lag, 
+theres some wobble going around, that may be caused by the frequent resyncs
+
+more levels
+more menus
+
+some animations
+and animation programming
+
+more players,bricks,projectiles
+
+hats n caps
+select hat
+
+skins
+
+sell

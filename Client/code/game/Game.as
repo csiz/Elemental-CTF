@@ -40,7 +40,6 @@
 		public var fire_flag:Flag;
 		//newtork data
 		public var network:Network;
-		public const lag_correction = 0;//todo set it to 50 later on
 		//user interface
 		public var w:Boolean;
 		public var a:Boolean;
@@ -57,6 +56,8 @@
 		public var level:int;
 		public var ready_timer:Number;
 		public var Ready:Function;
+		
+		public var damage_control:Dictionary;
 		
 		public var lag_array:Array;
 		public var fps_array:Array;
@@ -116,6 +117,7 @@
 			Ready = null;
 			this.state_number = state_number;
 			this.level = level;
+			this.damage_control = new Dictionary(true);
 			
 			background = levels.level[level].background;
 			addChild(background);
@@ -160,7 +162,6 @@
 			ready_timer = 10000;//be dead for 10 seconds before respawn
 			me = null;
 			ui.StartPlayerSelect();
-			//todo
 		}
 		
 		public function Add(role:String, flavor:String, x:Number, y:Number, vx:Number, vy:Number, id:int, unique:int, team:String,health:Number){
@@ -182,12 +183,37 @@
 			}
 		}
 		public function Change(obj:*, health:Number, x:Number, y:Number, vx:Number, vy:Number, elapsed_time:Number){
-			//this modification, may give the player a ver nice illusion of continuity, but it may affect game play. Bascially it will remove the delay between a player launching a projectile and it leaving the player (so there's no window where fire player can't shoot because of lag) however this may lead the player to shoot behind what someone else is doing.
-			elapsed_time -= (lag_correction * 0.001);
+			var my_x = obj.body.GetPosition().x;
+			var my_y = obj.body.GetPosition().y;
+			var my_vx = vx;
+			var my_vy = vy;
 			
-			x += vx * elapsed_time;
-			y += vy * elapsed_time;
+			//x += vx * elapsed_time;
+			//y += vy * elapsed_time;
+			var true_x = x + vx * elapsed_time;
+			var true_y = y + vy * elapsed_time;
+			//change the position only if its 10 away from the position it should be
+			if(Math.sqrt(Math.pow(true_x - my_x,2) + Math.pow(true_y - my_y,2)) > 1){
+				my_x = x;//this way it never goes inside a brick
+				my_y = y;
+			}else{
+			//change the speed so that it moves towards true position in 5lag ammount of time
+				my_vx = vx + ((true_x - my_x) / (5 * lag / 1000));
+				my_vy = vy + ((true_y - my_y) / (5 * lag / 1000));
+			}
 			
+			var delay = 1000 * elapsed_time;//time in miliseconds
+			
+			obj.health = health;
+			if(obj.role == "player"){
+				if(obj.health <= 0){
+					obj.Kill(delay);
+				}
+			}
+			box2d.ChangePositionAndSpeed(obj.body,my_x,my_y,my_vx,my_vy);
+		}
+		
+		public function Set(obj:*, health:Number, x:Number, y:Number, vx:Number, vy:Number, elapsed_time:Number){
 			var delay = 1000 * elapsed_time;//time in miliseconds
 			
 			obj.health = health;
@@ -198,8 +224,25 @@
 			}
 			box2d.ChangePositionAndSpeed(obj.body,x,y,vx,vy);
 		}
+		
+		public function Damage(time:Number,damage:Number,target_unique:int,source_unique:int){
+			var apply = true;
+			if(damage_control[source_unique]){//if it exists
+				if(Math.abs(time-damage_control[source_unique]) < 0.1){//happened withiht 100 ms
+					apply = false;//we already applied it, so we don't double it
+				}
+			}
+			if(apply){
+				if(me){
+					me.health -= damage;
+					if(me.health <= 0){
+						me.Kill((network.Time() - time)*1000);
+					}
+				}
+			}
+		}
 		public function AnimateAction(unique:int,elapsed_time:Number){
-			var delay = elapsed_time * 1000 - lag_correction;//time in miliseconds
+			var delay = elapsed_time * 1000;//time in miliseconds
 			var obj = network.objects[unique];
 			if(obj){
 				if(obj.role == "player"){
@@ -240,7 +283,7 @@
 								//hit is the thing that "body" hit
 								if(hit.GetUserData().role == "player"){
 									if(body.GetUserData().team != hit.GetUserData().team){
-										attacks[hit.GetUserData()] = {damage:body.GetUserData().attack, id:body.GetUserData().id};
+										attacks[hit.GetUserData()] = {damage:body.GetUserData().attack, id:body.GetUserData().id,unique:body.GetUserData().unique};
 										body.GetUserData().attackTimer = 0;
 										break;
 									}
@@ -267,7 +310,7 @@
 							//hit is the thing that "body" hit
 							if(hit.GetUserData().role == "player"){
 								if(body.GetUserData().team != hit.GetUserData().team){
-									attacks[hit.GetUserData()] = {damage:body.GetUserData().attack, id:body.GetUserData().id};
+									attacks[hit.GetUserData()] = {damage:body.GetUserData().attack, id:body.GetUserData().id,unique:body.GetUserData().unique};
 									body.GetUserData().Remove();
 									break;
 								}
@@ -280,7 +323,7 @@
 			//apply damage
 			var player:*;
 			for(player in attacks){
-				player.Attack(attacks[player].damage,attacks[player].id);
+				player.Attack(attacks[player].damage,attacks[player].id,attacks[player].unique);
 			}
 			//end attacks
 			//flags
