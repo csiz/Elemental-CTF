@@ -26,6 +26,7 @@
 		public var flavor_map:Dictionary;
 		
 		public var reference_time:Number;
+		public var reference_time_count:int;
 		
 		public var action_buffer:Number;
 		public var damage_buffer:Array;
@@ -74,6 +75,7 @@
 			functions = new Array();
 			ready = false;
 			reference_time = 0;
+			reference_time_count = 0;
 			id = 0;
 			connection = null;
 		}
@@ -92,6 +94,7 @@
 										{
 											round_trip_time = (getTimer()*0.001) - round_trip_time;
 											reference_time = socket.readFloat() + round_trip_time/2 - (getTimer()*0.001);
+											reference_time_count = 1;
 											connection.Continue(function(socket:Socket)
 																{
 																	socket.writeInt(2);
@@ -457,7 +460,9 @@
 															StateLoop(state_number);
 														}
 														var round_trip_time = (getTimer()*0.001) - time_of_sent * 0.001;
-														reference_time = sync_time + round_trip_time/2 - (getTimer()*0.001);
+														var temp_time = sync_time + round_trip_time/2 - (getTimer()*0.001);
+														reference_time = (reference_time * reference_time_count + temp_time) / (reference_time_count + 1);
+														reference_time_count++;
 													});
 							});
 		}

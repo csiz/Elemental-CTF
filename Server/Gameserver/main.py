@@ -118,7 +118,7 @@ def SendGameState(stream,player,room):
 	for f in flags:
 		stream.write('ffi',flags[f].x,flags[f].y,flags[f].unique)
 
-	#time.sleep(0.1)#artficial lag
+	time.sleep(0.1)#artficial lag
 	
 
 

@@ -187,19 +187,17 @@
 			var my_y = obj.body.GetPosition().y;
 			var my_vx = vx;
 			var my_vy = vy;
-			
-			//x += vx * elapsed_time;
-			//y += vy * elapsed_time;
-			var true_x = x + vx * elapsed_time;
-			var true_y = y + vy * elapsed_time;
+
+			var true_x = x; //+ vx * elapsed_time;//todo
+			var true_y = y; //+ vy * elapsed_time;
 			//change the position only if its 10 away from the position it should be
-			if(Math.sqrt(Math.pow(true_x - my_x,2) + Math.pow(true_y - my_y,2)) > 1){
+			if(Math.sqrt(Math.pow(true_x - my_x,2) + Math.pow(true_y - my_y,2)) > 10){
 				my_x = x;//this way it never goes inside a brick
 				my_y = y;
 			}else{
-			//change the speed so that it moves towards true position in 5lag ammount of time
-				my_vx = vx + ((true_x - my_x) / (5 * lag / 1000));
-				my_vy = vy + ((true_y - my_y) / (5 * lag / 1000));
+			//change the speed so that it moves towards true position in 300+3lag ammount of time
+				my_vx = vx + ((true_x - my_x) / (0.3+(3 * lag / 1000)));
+				my_vy = vy + ((true_y - my_y) / (0.3+(3 * lag / 1000)));
 			}
 			
 			var delay = 1000 * elapsed_time;//time in miliseconds

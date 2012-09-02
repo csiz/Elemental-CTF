@@ -1,9 +1,8 @@
-think about the reset flag thing, you may reset the flag for someone else, causing confusion
-
 when you reset the flag with NetworkUpdate, the contacts still remain. So if someone else picks the flag, because of lag, it will remain on them.
+there may be more flag problems, be aware of them
 
-work on the illusion of no lag, 
-theres some wobble going around, that may be caused by the frequent resyncs
+
+todo--------------------------------------------------------------------------------------------------
 
 more levels
 more menus
