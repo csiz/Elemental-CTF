@@ -5,7 +5,7 @@
 	
 	
 	
-	public class Connection{
+	public class Connection extends EventDispatcher{
 		private var socket:Socket;
 		private var closed:Function;
 		private var opened:Function;
@@ -68,6 +68,7 @@
 		}
 		private function ioErrorHandler(event:IOErrorEvent){
 			socket.close();
+			dispatchEvent(new Disconnect(Disconnect.SERVER_ERROR));
 		}
 		
 		private function real_process(){

@@ -10,36 +10,31 @@
 	
 
 	public class MainScreen extends MovieClip{
-		private var functions:Array;
-		private var ready:Boolean;
-		public var connection:Connection;
+		private var functions:Array = new Array();
+		private var ready:Boolean = false;
 		public var main:Main;
 		
-		public function MainScreen(main:Main){
+		public function MainScreen(main:Main,connection:Connection = null){
 			this.main = main;
-			ready = false;
-			functions = new Array;
 			
-			connection = new Connection(Main.SERVER,Main.PORT);
-			
-			//if(main.save.data.id == null){
-				NewID();
-			//}else{
-				//LoadID();
-			//}todo
+			if(!connection){
+				main.connection = new Connection(Main.SERVER,Main.PORT);
+			}
 			
 			GetPlayer();
 			name_button.addEventListener(MouseEvent.CLICK, ChangeName);
 			play_button.addEventListener(MouseEvent.CLICK, PlayTheGame);
 			tutorial_button.addEventListener(MouseEvent.CLICK, PlayTutorial);
+			account_button.addEventListener(MouseEvent.CLICK, Account);
 			//EndConnection();
 			
 			
 		}
 		public function PlayTheGame(event){
 			//todo retry if it fails
-			connection.Add (function(socket:Socket)
+			main.connection.Add (function(socket:Socket)
 							{
+								main.LoadingScreen();
 					  		 	socket.writeInt(6);
 							 	socket.writeBytes(main.id,0,32);
 							 	socket.writeBytes(main.password,0,32);
@@ -49,7 +44,7 @@
 					  		},4,function(socket:Socket)
 							{
 								if(socket.readInt() == 1){
-									connection.Continue(Connection.Nothing,68,function(socket:Socket)
+									main.connection.Continue(Connection.Nothing,68,function(socket:Socket)
 														{
 															var address = new String()
 															var port = new int;
@@ -71,10 +66,13 @@
 		public function PlayTutorial(event){
 			main.LoadTutorial();
 		}
-			
+		public function Account(event){
+			main.AccountScreen();
+		}
+		
 		public function ChangeName(event){
 			main.display_name = Utils.Standardize(name_text.text);
-			connection.Add (function(socket:Socket)
+			main.connection.Add (function(socket:Socket)
 								{
 								 	socket.writeInt(4);
 									socket.writeBytes(main.id,0,32);
@@ -103,27 +101,9 @@
 				functions.shift()();
 			}
 		}
-		public function NewID(){
-			connection.Add (function(socket:Socket)
-								{
-								 	socket.writeInt(2);
-						 		},32,function(socket:Socket)
-								{
-									socket.readBytes(main.id,0,32);
-									main.save.data.id = main.id;
-									main.password = Utils.Hash(main.id,"");
-									main.save.data.password = main.password;
-									main.save.flush();
-									trace("New id and default password: ",main.id);
-							  	});
-		}
-		public function LoadID(){
-			main.id = main.save.data.id;
-			main.password = main.save.data.password;
-			trace("Loaded id: ",main.id);
-		}
+		
 		public function GetPlayer(){
-			connection.Add (function(socket:Socket)
+			main.connection.Add (function(socket:Socket)
 							{
 					  		 	socket.writeInt(3);
 							 	socket.writeBytes(main.id,0,32);
@@ -131,7 +111,7 @@
 					  		},4,function(socket:Socket)
 							{
 								if(socket.readInt() == 1){
-									connection.Continue(Connection.Nothing,292,function(socket:Socket)
+									main.connection.Continue(Connection.Nothing,292,function(socket:Socket)
 														{
 															socket.readBytes(main.display_name,0,32);
 															socket.readBytes(main.mail,0,256);
@@ -141,18 +121,18 @@
 													  	});
 								}else{
 									trace("Invalid login.");
-									NewID();
-									GetPlayer();
+									main.LoginScreen();
 								}
 						  	});
 		}
 		public function EndConnection(){
-			connection.Add  (function(socket:Socket)
+			main.connection.Add  (function(socket:Socket)
 							 {
 								 socket.writeInt(0);
 							 },0,function(socket:Socket){
 								 Ready();
 							 });
+			main.connection = null;
 		}
 	}
 	

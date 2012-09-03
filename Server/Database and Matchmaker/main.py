@@ -27,6 +27,13 @@ def NewPlayer(stream):
 	player = database.AddPlayer()
 	stream.write('32s',player.id) #writes the id back
 
+def CheckPlayer(stream):
+	(id,password) = stream.read('32s32s')
+	if database.Check(id,password):
+		stream.write('i',1)
+	else:
+		stream.write('i',0)
+
 def GetPlayer(stream):
 	(id,password) = stream.read('32s32s')
 	player = database.GetPlayer(id,password)
@@ -110,6 +117,10 @@ MessageHandler = {#reads, returns:
 	#id, password, region, room_id
 	#0 or 1 or 2, then address, port, room id
 
+	8:CheckPlayer,
+	#id, password
+	#1 or 0
+
 	#remember to also add in DDOS prevention below
 }
 ###############################################################################################################################
@@ -127,6 +138,7 @@ MessageCost = {
 	5:50,
 	6:1,
 	7:5,
+	8:5,
 }
 CostCap = 3600
 IPList = {}
