@@ -185,19 +185,25 @@
 		public function Change(obj:*, health:Number, x:Number, y:Number, vx:Number, vy:Number, elapsed_time:Number){
 			var my_x = obj.body.GetPosition().x;
 			var my_y = obj.body.GetPosition().y;
-			var my_vx = vx;
-			var my_vy = vy;
+			var my_vx = obj.body.GetLinearVelocity().x;
+			var my_vy = obj.body.GetLinearVelocity().y;
 
-			var true_x = x; //+ vx * elapsed_time;//todo
-			var true_y = y; //+ vy * elapsed_time;
+			var true_x = x;// + vx * elapsed_time;//todo
+			var true_y = y;// + vy * elapsed_time;
 			//change the position only if its 10 away from the position it should be
 			if(Math.sqrt(Math.pow(true_x - my_x,2) + Math.pow(true_y - my_y,2)) > 10){
-				my_x = x;//this way it never goes inside a brick
-				my_y = y;
+				box2d.ChangePositionAndSpeed(obj.body,x,y,vx,vy);
 			}else{
 			//change the speed so that it moves towards true position in 300+3lag ammount of time
-				my_vx = vx + ((true_x - my_x) / (0.3+(3 * lag / 1000)));
-				my_vy = vy + ((true_y - my_y) / (0.3+(3 * lag / 1000)));
+				
+				
+				my_vx = vx + ( (true_x-my_x) / 0.5 );
+				my_vy = vy + ( (true_y-my_y) / 0.5 );
+				box2d.ChangePositionAndSpeed(obj.body,my_x,my_y,my_vx,my_vy);
+				//box2d.Accelerate(obj.body, 2 * (true_x-my_x) / Math.pow(accel_time,2),2 * (true_y-my_y) / Math.pow(accel_time,2));
+				
+				//my_vx = vx + ((true_x - my_x) / (0.3+(3 * lag / 1000)));
+				//my_vy = vy + ((true_y - my_y) / (0.3+(3 * lag / 1000)));
 			}
 			
 			var delay = 1000 * elapsed_time;//time in miliseconds
@@ -208,7 +214,7 @@
 					obj.Kill(delay);
 				}
 			}
-			box2d.ChangePositionAndSpeed(obj.body,my_x,my_y,my_vx,my_vy);
+			
 		}
 		
 		public function Set(obj:*, health:Number, x:Number, y:Number, vx:Number, vy:Number, elapsed_time:Number){

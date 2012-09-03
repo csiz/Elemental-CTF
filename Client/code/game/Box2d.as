@@ -538,6 +538,10 @@
 			body.SetLinearVelocity(new b2Vec2(vx,vy));
 			body.SetAwake(true);
 		}
+		public function Accelerate(body:b2Body, ax:Number, ay:Number){
+			body.ApplyForce(new b2Vec2(ax * body.GetMass(), ay * body.GetMass()),new b2Vec2(0,0));
+			body.SetAwake(true);
+		}
 		//end helper functions
 	}
 	//end class
