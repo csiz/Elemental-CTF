@@ -20,9 +20,8 @@
 		public var store_data:Boolean = true;
 		public var id = new ByteArray();
 		public var password = new ByteArray();
-		public var display_name = new ByteArray();
-		public var mail = new ByteArray();
-		public var points:int = 0;
+		
+		public var user:User = new User();
 		
 		public var connection:Connection = null;
 		
@@ -38,20 +37,24 @@
 			connection.addEventListener(Disconnect.SERVER_ERROR,ServerError);
 			if(Load()){//if we could load the stored id and password, check them:
 				if( (id) && (password) && (store_data) ){
-					connection.Add (function(socket:Socket)
-									{
-										socket.writeInt(8);
-										socket.writeBytes(id,0,32);
-										socket.writeBytes(password,0,32);
-									},4,function(socket:Socket)
-									{
-										var response = socket.readInt();
-										if(response){
-											Menu();
-										}else{
-											LoginScreen("The stored id and password combination was wrong.");
-										}
-									});
+					if( (id.length == 32) && (password.length == 32) ){
+						connection.Add (function(socket:Socket)
+										{
+											socket.writeInt(8);
+											socket.writeBytes(id,0,32);
+											socket.writeBytes(password,0,32);
+										},4,function(socket:Socket)
+										{
+											var response = socket.readInt();
+											if(response){
+												Menu();
+											}else{
+												LoginScreen("The stored id and password combination was wrong.");
+											}
+										});
+					}else{
+						LoginScreen("Error loading your login information, please enter them again or create a New account.");
+					}
 				}else{//means data isn't stored
 					LoginScreen("Welcome back, please Login or create a New account.");
 				}
@@ -97,8 +100,8 @@
 		public function LoadingScreen(){
 			Add(loading_screen);
 		}
-		public function AccountScreen(){
-			Add(new code.menu.AccountScreen(this));
+		public function AccountScreen(message:String = ""){
+			Add(new code.menu.AccountScreen(this,message));
 		}
 		
 		private function Add(what:MovieClip){
@@ -111,13 +114,14 @@
 			addChild(screen);
 		}
 		public function Save(){
-			store_data = true;
-			save.data.store_data = true;
-			save.data.id = id;
-			save.data.password = password;
-			save.data.display_name = display_name;
-			save.data.mail = mail;
-			save.data.points = points;
+			save.data.store_data = store_data;
+			if(store_data){
+				save.data.id = id;
+				save.data.password = password;
+			}else{
+				save.data.id = null;
+				save.data.password = null;
+			}
 			save.flush();
 		}
 		public function Load():Boolean{
@@ -126,9 +130,6 @@
 					if(save.data.store_data){
 						id = save.data.id;
 						password = save.data.password;
-						display_name = save.data.display_name;
-						mail = save.data.mail;
-						points = save.data.points;
 					}
 					store_data = save.data.store_data;
 					return true;
@@ -143,17 +144,9 @@
 			store_data = false;
 			id = new ByteArray();
 			password = new ByteArray();
-			display_name = new ByteArray();
-			mail = new ByteArray();
-			points = 0;
 
-			save.data.store_data = false;
-			save.data.id = null;
-			save.data.password = null;
-			save.data.display_name = null;
-			save.data.mail = null;
-			save.data.points = null;
-			save.flush();
+			Save();
 		}
 	}
 }
+

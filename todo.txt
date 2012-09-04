@@ -5,7 +5,9 @@ there may be more flag problems, be aware of them
 todo--------------------------------------------------------------------------------------------------
 
 more levels
-more menus
+
+recover password button
+join custom room
 
 some animations
 and animation programming

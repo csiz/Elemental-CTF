@@ -12,7 +12,6 @@
 		
 		public function LoginScreen(main:Main,message:String = "Please Login, or create a New account.") {
 			this.main = main;
-			remember.selected = main.store_data;
 			main.Clear();
 			this.message.text = message;
 			
@@ -25,9 +24,9 @@
 				main.LoadingScreen();
 				main.id = Utils.Standardize(id_field.text);
 				main.password = Utils.Hash(main.id,password_field.text);
-				if(remember.selected){
-					main.Save();
-				}
+				main.store_data = remember.selected;
+				main.Save();
+					
 				main.connection.Add (function(socket:Socket)
 								{
 									socket.writeInt(8);
@@ -56,6 +55,7 @@
 									main.id = new ByteArray();
 									socket.readBytes(main.id,0,32);
 									main.password = Utils.Hash(main.id,"");
+									main.store_data = true;
 									main.Save();
 									trace("New id and default password: ",main.id);
 									main.Menu();

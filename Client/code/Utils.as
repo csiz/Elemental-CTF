@@ -23,6 +23,17 @@
 
 			return bytes;
 		}
+		
+		public static function Strip(source:ByteArray):String{
+			var string = source.toString();
+			var response = new String();
+			for(var i = 0; i < string.length; i++){
+				if(string.charCodeAt(i) != 0){
+					response += string.charAt(i);
+				}
+			}
+			return response;
+		}
 	}
 	
 }

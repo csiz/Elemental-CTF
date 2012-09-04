@@ -77,6 +77,21 @@ def ChangeName(id, password, name):
 
 	return response
 
+def ChangeEmail(id, password, email):
+	with data_lock:
+		response = None
+		if Check(id,password):
+			data[id].mail = email
+			response = True
+		else:
+			response = False
+
+	with history_lock:
+		print("ID:",id,"changed email to:",email,".\n",file = history)
+	
+
+	return response
+
 def ChangeLogin(id, password, new_id, new_password):
 	with data_lock:
 		response = None

@@ -22,7 +22,14 @@
 			}
 			
 			GetPlayer();
-			name_button.addEventListener(MouseEvent.CLICK, ChangeName);
+			OnReady(function (){
+						if(main.user.display_name.length > 0){
+							message.text = "Name: " + main.user.display_name + "\nPoints: " + main.user.points;
+						}else{
+							message.text = "We sense you're new here, so please play the Tutorial first, its pretty short.";
+						}
+					});
+			
 			play_button.addEventListener(MouseEvent.CLICK, PlayTheGame);
 			tutorial_button.addEventListener(MouseEvent.CLICK, PlayTutorial);
 			account_button.addEventListener(MouseEvent.CLICK, Account);
@@ -70,24 +77,6 @@
 			main.AccountScreen();
 		}
 		
-		public function ChangeName(event){
-			main.display_name = Utils.Standardize(name_text.text);
-			main.connection.Add (function(socket:Socket)
-								{
-								 	socket.writeInt(4);
-									socket.writeBytes(main.id,0,32);
-							 		socket.writeBytes(main.password,0,32);
-									socket.writeBytes(main.display_name,0,32);
-						 		},4,function(socket:Socket)
-								{
-									if(socket.readInt() == 1){
-										trace("Changed name.");
-									}else{
-										trace("Change name failed.");
-									}
-							  	});
-		}
-		
 		public function OnReady(f:Function){
 			functions.push(f);
 			if(ready){
@@ -113,10 +102,19 @@
 								if(socket.readInt() == 1){
 									main.connection.Continue(Connection.Nothing,292,function(socket:Socket)
 														{
-															socket.readBytes(main.display_name,0,32);
-															socket.readBytes(main.mail,0,256);
-															main.points = socket.readInt();
-															trace("Login success, name: ",main.display_name,", mail: ", main.mail,", points: ",main.points);
+															var display_name = new ByteArray();
+															var mail = new ByteArray();
+															var points = 0;
+															
+															socket.readBytes(display_name,0,32);
+															socket.readBytes(mail,0,256);
+															points = socket.readInt();
+															
+															main.user.display_name = Utils.Strip(display_name);
+															main.user.mail = Utils.Strip(mail);
+															main.user.points = points;
+															
+															trace("Login success, name: ",main.user.display_name,", mail: ", main.user.mail,", points: ",main.user.points);
 															Ready();
 													  	});
 								}else{

@@ -17,7 +17,7 @@ def MessageDone(stream):
 
 def CheckAvailability(stream):
 	(id,) = stream.read('32s')
-	result = database.ChecKAvailability(id)
+	result = database.CheckAvailability(id)
 	if(result):
 		stream.write('i',1)
 	else:
@@ -48,6 +48,13 @@ def GetPlayer(stream):
 def ChangeName(stream):
 	(id, password, name) = stream.read('32s32s32s')
 	if database.ChangeName(id,password,name):
+		stream.write('i',1)#success
+	else:
+		stream.write('i',0)#fail
+
+def ChangeEmail(stream):
+	(id, password, email) = stream.read('32s32s32s')
+	if database.ChangeEmail(id,password,email):
 		stream.write('i',1)#success
 	else:
 		stream.write('i',0)#fail
@@ -121,6 +128,10 @@ MessageHandler = {#reads, returns:
 	#id, password
 	#1 or 0
 
+	9:ChangeEmail,
+	#id, password, email
+	#0 or 1
+
 	#remember to also add in DDOS prevention below
 }
 ###############################################################################################################################
@@ -139,6 +150,7 @@ MessageCost = {
 	6:1,
 	7:5,
 	8:5,
+	9:10,
 }
 CostCap = 3600
 IPList = {}
