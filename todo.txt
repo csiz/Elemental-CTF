@@ -6,8 +6,7 @@ todo----------------------------------------------------------------------------
 
 more levels
 
-recover password button
-join custom room
+chat, and first line in chat is the room id
 
 some animations
 and animation programming
@@ -18,5 +17,7 @@ hats n caps
 select hat
 
 skins
+
+how to do password recovery, 
 
 sell

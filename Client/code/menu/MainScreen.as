@@ -30,23 +30,29 @@
 						}
 					});
 			
-			play_button.addEventListener(MouseEvent.CLICK, PlayTheGame);
+			play_button.addEventListener(MouseEvent.CLICK, function(event){PlayTheGame();});
+			room_button.addEventListener(MouseEvent.CLICK, function(event){PlayTheGame(room_text.text);});
 			tutorial_button.addEventListener(MouseEvent.CLICK, PlayTutorial);
 			account_button.addEventListener(MouseEvent.CLICK, Account);
 			//EndConnection();
-			
-			
 		}
-		public function PlayTheGame(event){
+		public function PlayTheGame(room_id:String = null){
 			//todo retry if it fails
 			main.connection.Add (function(socket:Socket)
 							{
 								main.LoadingScreen();
-					  		 	socket.writeInt(6);
-							 	socket.writeBytes(main.id,0,32);
-							 	socket.writeBytes(main.password,0,32);
-								socket.writeBytes(Utils.Standardize("local"),0,32);
-								//socket.writeBytes(Utils.Standardize("csiz room"),0,32);//also modify from 6 to 7
+								if(room_id){
+									socket.writeInt(7);
+									socket.writeBytes(main.id,0,32);
+									socket.writeBytes(main.password,0,32);
+									socket.writeBytes(Utils.Standardize(Main.REGION),0,32);
+									socket.writeBytes(Utils.Standardize(room_id),0,32);
+								}else{
+									socket.writeInt(6);
+									socket.writeBytes(main.id,0,32);
+									socket.writeBytes(main.password,0,32);
+									socket.writeBytes(Utils.Standardize(Main.REGION),0,32);
+								}
 								
 					  		},4,function(socket:Socket)
 							{
