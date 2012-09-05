@@ -5,8 +5,10 @@ there may be more flag problems, be aware of them
 todo--------------------------------------------------------------------------------------------------
 
 more levels
-
-chat, and first line in chat is the room id
+back button in the game ui, this back button sets the room_text to the room_id i was just in
+floating names
+scoreboard
+ask reddit for graphics
 
 some animations
 and animation programming

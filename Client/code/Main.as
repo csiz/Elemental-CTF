@@ -82,7 +82,7 @@
 		}
 		public function LoadGame(address:String,port:int,room:ByteArray){
 			Add(loading_screen);
-			var network:Network = new Network();
+			var network:Network = new Network(room);
 			network.Connect(address,port,id);
 			var game = new Game(this,network);
 			network.OnReady(function(){Add(game);game.Start();stage.focus = game});

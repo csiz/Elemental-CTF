@@ -4,9 +4,9 @@
 	import flash.utils.Endian;
 
 	public class Utils{
-		public static function Standardize(s:String):ByteArray{
-			s = s.slice(0,32);
-			while(s.length < 32){
+		public static function Standardize(s:String,size:int = 32):ByteArray{
+			s = s.slice(0,size);
+			while(s.length < size){
 				s += String.fromCharCode(0);
 			}
 			var bytes = new ByteArray();

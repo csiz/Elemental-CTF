@@ -2,10 +2,15 @@
 	
 	import flash.display.MovieClip;
 	import flash.events.MouseEvent;
+	import flash.events.Event;
+	import flash.events.FocusEvent;
+	import flash.events.KeyboardEvent;
+	import flash.ui.Keyboard;
 	
 	
 	public class UI extends MovieClip {
 		public var game:Game;
+		public var chat_frames = 600;
 		
 		public function UI(game:Game) {
 			this.game = game
@@ -15,6 +20,13 @@
 			chose_player_dialog.ranged_water.addEventListener(MouseEvent.CLICK,function(){FinishPlayerSelect("ranged water","ranged");});
 			chose_player_dialog.visible = false;
 			overview_dialog.visible = false;
+			
+			chat_input.visible = false;
+			chat_input.addEventListener(FocusEvent.FOCUS_OUT, function(event){game.chatting = false;chat_input.visible = false;chat_frames = 600;});
+			chat_input.addEventListener(FocusEvent.FOCUS_IN, function(event){game.chatting = true;chat_input.visible = true;});
+			chat_input.addEventListener(KeyboardEvent.KEY_DOWN,WriteChat);
+			
+			addEventListener(Event.ENTER_FRAME, ChatVisibility);
 		}
 		
 		public function StartPlayerSelect(){
@@ -34,6 +46,29 @@
 		}
 		public function HideOverview(){
 			overview_dialog.visible = false;
+		}
+		public function WriteChat(event:KeyboardEvent){
+			if(event.charCode == Keyboard.ENTER){
+				if(chat_input.text.length > 0){
+					game.network.WriteChat(chat_input.text);
+					chat_input.text = "";
+				}
+			}
+		}
+		public function ChatLine(s:String){
+			chat.appendText("\n" + s);
+			chat.scrollV = chat.numLines;
+			chat_frames = Math.max(300,chat_frames);
+		}
+		public function ChatVisibility(event){
+			chat_frames --;
+			chat_frames = Math.max(chat_frames,0);
+			
+			if(game.chatting){
+				chat.alpha = 1;
+			}else{
+				chat.alpha = Math.min(1,chat_frames/120);
+			}
 		}
 	}
 	

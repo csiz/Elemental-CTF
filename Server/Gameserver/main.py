@@ -77,7 +77,7 @@ def ReceivePlayerState(stream,player,room):
 
 
 def SendGameState(stream,player,room):
-	nr_of_bytes = 12 + 24
+	nr_of_bytes = 20 + 24#20 for state_number, actions, damages, chat, players, 24 is 2*12 for flags
 	players_to_send = []
 
 	with room.lock:
@@ -92,6 +92,9 @@ def SendGameState(stream,player,room):
 		damages_to_send = player.damages
 		player.damages = []
 
+		chat_to_send = player.chat
+		player.chat = []
+
 		flags = copy.deepcopy(room.flags)
 
 		state_number = room.state_number
@@ -100,15 +103,20 @@ def SendGameState(stream,player,room):
 
 	nr_of_bytes += 16 * len(damages_to_send)
 
+	nr_of_bytes += 68 * len(chat_to_send)
+
 	stream.write('i',nr_of_bytes)
 
-	stream.write('iiii',state_number,len(actions_to_send),len(damages_to_send),len(players_to_send))
+	stream.write('iiiii',state_number,len(actions_to_send),len(damages_to_send),len(chat_to_send),len(players_to_send))
 
 	for a in actions_to_send:
 		stream.write('if',a.unique,a.time)
 
 	for d in damages_to_send:
 		stream.write('ffii',d.time,d.damage,d.target,d.source)
+
+	for c in chat_to_send:
+		stream.write('i64s',c.id,c.text)
 
 	for p in players_to_send:
 		stream.write('iifi', p.id, p.team, p.time, len(p.objects))
@@ -139,6 +147,13 @@ def ReceiveDamage(stream,player,room):
 					if o.unique == unique_target:
 						o.health -= damage
 				room.players[player_id_target].damages.append(Damage(time,damage,unique_target,unique_source))
+
+def ReceiveChat(stream,player,room):
+	(state_number,text) = stream.read('i64s')
+	with room.lock:
+		if state_number == room.state_number:
+			for id in room.players:
+				room.players[id].chat.append(Chat(player.id,text))
 
 def SendGameOverview(stream,player,room):
 	with room.lock:
@@ -231,6 +246,7 @@ MessageHandler = {#reads, returns:
 	8:ReceiveFlagState,#reads iiffi state,flag,x,y, unique
 	9:ReceiveWin,#reads ii state,team
 	10:ReceiveDamage,#read iffiii, state, time, damage, target_id, target_unique, source_unique
+	11:ReceiveChat,#read i64s, state, text
 
 
 }

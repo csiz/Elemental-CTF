@@ -14,6 +14,7 @@ class Player:
 		#incoming information
 		self.actions = []
 		self.damages = []
+		self.chat = []
 
 
 class Object:
@@ -39,6 +40,10 @@ class Damage:
 		self.target = unique_target
 		self.source = unique_source
 
+class Chat:
+	def __init__(self,id,text):
+		self.id = id;
+		self.text = text;
 
 
 class GameRoom:

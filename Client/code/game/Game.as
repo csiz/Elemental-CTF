@@ -13,6 +13,7 @@
 	import Box2D.Dynamics.b2Fixture;
 	
 	import code.Main;
+	import flash.utils.ByteArray;
 	
 	public class Game extends MovieClip{
 		//Game class starts here...............................................................*
@@ -50,6 +51,7 @@
 		public var mouse:Boolean;
 		public var control:String;
 		public var speed:Number;
+		public var chatting:Boolean;
 		//other
 		public var running:Boolean;
 		public var state_number:int;
@@ -87,6 +89,7 @@
 			mouse = false;
 			control = "keyboard";
 			speed = 0.3;
+			chatting = false;
 			
 			
 			
@@ -97,7 +100,7 @@
 			stage.addEventListener(KeyboardEvent.KEY_UP,KeyUp);
 			stage.addEventListener(MouseEvent.MOUSE_DOWN,MouseDown);
 			stage.addEventListener(MouseEvent.MOUSE_UP,MouseUp);
-			addEventListener(Event.ENTER_FRAME,GameLoop);
+			stage.addEventListener(Event.ENTER_FRAME,GameLoop);
 			
 			network.Start(this);
 			network.Load();
@@ -618,31 +621,44 @@
 		}
 		protected function KeyDown(event:KeyboardEvent):void
 		{
-			switch (event.keyCode)
-			{
-				case Keyboard.W:
-				case Keyboard.UP:
-				w=true;
-				break;
-				case Keyboard.A:
-				case Keyboard.LEFT:
-				a=true;
-				break;
-				case Keyboard.S:
-				case Keyboard.DOWN:
-				s=true;
-				break;
-				case Keyboard.D:
-				case Keyboard.RIGHT:
-				d=true;
-				break;
-				case Keyboard.SPACE:
-				space=true;
-				control = "keyboard";
-				break;
-				case Keyboard.TAB:
-				tab = true;
-				break;
+			
+			if(!chatting){
+				switch (event.keyCode)
+				{
+					
+					case Keyboard.W:
+					case Keyboard.UP:
+					w=true;
+					break;
+					case Keyboard.A:
+					case Keyboard.LEFT:
+					a=true;
+					break;
+					case Keyboard.S:
+					case Keyboard.DOWN:
+					s=true;
+					break;
+					case Keyboard.D:
+					case Keyboard.RIGHT:
+					d=true;
+					break;
+					case Keyboard.SPACE:
+					space=true;
+					control = "keyboard";
+					break;
+					case Keyboard.TAB:
+					tab = true;
+					break;
+				}
+			}
+			if(event.keyCode == Keyboard.ENTER){
+				if(!chatting){
+					stage.focus = ui.chat_input;
+					chatting = true;
+				}else{
+					stage.focus = this;
+					chatting = false;
+				}
 			}
 		}
 		

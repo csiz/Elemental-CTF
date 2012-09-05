@@ -11,6 +11,7 @@
 
 
 	public class Network{
+		public var room:ByteArray;
 		public var id:int;
 		public var game:Game;
 		public var objects:Dictionary;
@@ -30,13 +31,15 @@
 		
 		public var action_buffer:Number;
 		public var damage_buffer:Array;
+		public var chat_buffer:Array;
 		public var flag_update:FlagAction;
 		
 		public function Time():Number{
 			return (getTimer()*0.001) + reference_time;
 		}
 		
-		public function Network(){
+		public function Network(room:ByteArray){
+			this.room = room;
 			team_map = new Dictionary();
 			team_map["neutral"] = 0;
 			team_map["fire"] = 1;
@@ -209,6 +212,7 @@
 			var state_number = socket.readInt();
 			var number_of_actions = socket.readInt();
 			var number_of_damages = socket.readInt();
+			var number_of_chat = socket.readInt();
 			var number_of_players = socket.readInt();
 			
 			
@@ -218,7 +222,7 @@
 				var action_time = socket.readFloat();
 				game.AnimateAction(temp_unique,Time()-action_time);
 			}
-			//read and process the actions
+			//read and process the damages
 			for(;number_of_damages > 0; number_of_damages--){
 				var damage_time = socket.readFloat();
 				var damage = socket.readFloat();
@@ -226,6 +230,15 @@
 				var source = socket.readInt();
 				game.Damage(damage_time,damage,target,source);
 			}
+			//read and process the chat todo
+			for(;number_of_chat > 0; number_of_chat--){
+				var chat_id = socket.readInt();
+				var chat_text = new ByteArray();
+				socket.readBytes(chat_text,0,64);
+				
+				game.ui.ChatLine(chat_id.toString() + ": " + Utils.Strip(chat_text));
+			}
+			
 			//read and process the players
 			var obj:*;
 			for(obj in objects){
@@ -333,6 +346,10 @@
 			}
 		}
 		
+		public function WriteChat(s:String){
+			chat_buffer.push(s);
+		}
+		
 		public function DropFlag(state_number:int,flag:Flag){
 			flag_update = new FlagAction();
 			flag_update.team = flag.team;
@@ -390,9 +407,11 @@
 									running = true;
 									action_buffer = 0;
 									damage_buffer = new Array();
+									chat_buffer = new Array();
 									flag_update = null;
 									
 									game.Reload(state_number,level);
+									game.ui.ChatLine("Room: " + Utils.Strip(room));
 									StateLoop(state_number);
 								});
 			}else{//no connection means its in tutorial mode, so do nothing
@@ -436,6 +455,13 @@
 									socket.writeInt(damage.target_id);
 									socket.writeInt(damage.target);
 									socket.writeInt(damage.source);
+								}
+								//Chat updates
+								while(chat_buffer.length){
+									var chat = chat_buffer.shift();
+									socket.writeInt(11);
+									socket.writeInt(state_number);
+									socket.writeBytes(Utils.Standardize(chat,64),0,64);
 								}
 								//Flag updates
 								if(flag_update){
