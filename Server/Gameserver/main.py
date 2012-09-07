@@ -13,6 +13,7 @@ import time
 import struct
 import hashlib
 import copy
+import math
 
 from socketstream import *
 from game import * #GameRoom,Player class import
@@ -31,9 +32,10 @@ rooms = {}
 rooms_lock = threading.RLock()
 
 class Incoming:
-	def __init__(self,id,room_id):
+	def __init__(self,id,name,room_id):
 		self.id = id
 		self.room_id = room_id
+		self.name = name
 		self.time = time.time()
 
 players = {}
@@ -94,7 +96,7 @@ def SendGameState(stream,player,room):
 	with room.lock:
 		for id in room.players:
 			if (id != player.id) and ( abs(time.time() - room.time - room.players[id].time) < 1.5 ):
-				nr_of_bytes += 16 + ( 32 * len(room.players[id].objects) )
+				nr_of_bytes += 20 + ( 32 * len(room.players[id].objects) )
 				players_to_send.append(copy.deepcopy(room.players[id]))
 
 		actions_to_send = player.actions
@@ -130,7 +132,7 @@ def SendGameState(stream,player,room):
 		stream.write('i64s',c.id,c.text)
 
 	for p in players_to_send:
-		stream.write('iifi', p.id, p.team, p.time, len(p.objects))
+		stream.write('iifii', p.id, p.team, p.time, p.points, len(p.objects))
 		for o in p.objects:
 			stream.write('iiifffff', o.unique, o.role, o.flavor, o.x, o.y, o.vx, o.vy, o.health)
 
@@ -158,6 +160,7 @@ def ReceiveDamage(stream,player,room):
 					if o.unique == unique_target:
 						o.health -= damage
 				room.players[player_id_target].damages.append(Damage(time,damage,unique_target,unique_source))
+				player.points += math.floor(damage)
 
 def ReceiveChat(stream,player,room):
 	(state_number,text) = stream.read('i64s')
@@ -172,6 +175,16 @@ def SendGameOverview(stream,player,room):
 		level = room.level
 
 	stream.write('ii',state_number,level)
+
+def SendPlayersNames(stream,player,room):
+	names = []
+	with room.lock:
+		for id in room.players:
+			names.append([id,room.players[id].points,room.players[id].name])
+
+	stream.write('i',len(names))
+	for n in names:
+		stream.write('ii32s',n[0],n[1],n[2])
 
 def ReceiveFlagState(stream,player,room):
 	(state_number,flag,x,y,unique) = stream.read('iiffi')
@@ -207,6 +220,7 @@ def RegisterPlayer(stream):#read player id, writes 1(success) or 0(fail) or 2(ke
 		with players_lock:
 			if id in players:
 				room_id = players[id].room_id
+				name = players[id].name
 				del players[id]
 				break
 		stream.write('i',2)
@@ -221,7 +235,7 @@ def RegisterPlayer(stream):#read player id, writes 1(success) or 0(fail) or 2(ke
 	with rooms_lock:
 		if room_id in rooms:
 			room = rooms[room_id]
-			player = room.NewPlayer()
+			player = room.NewPlayer(name)
 		else:
 			stream.write('i',0)
 			stream.flush()
@@ -261,6 +275,7 @@ MessageHandler = {#reads, returns:
 	12:StopFlushing,#not in use
 	13:Flush,
 	14:FlushButNotNow,#not in use
+	15:SendPlayersNames,#read nothing, send i then i*(i32s) id,names
 
 
 }
@@ -310,17 +325,20 @@ def ConnectionEnded(stream):
 	pass
 
 def IncomingPlayer(stream):
-	(player_id,room_id) = stream.read('32s32s')
-	print("Incoming player:",player_id,"in room:",room_id)
+	(player_id,player_name,room_id) = stream.read('32s32s32s')
+	print("Incoming player:",player_name,"in room:",room_id)
 	with players_lock:
 		if player_id not in players:
-			players[player_id] = Incoming(player_id,room_id)
-		players[player_id].room_id = room_id
+			players[player_id] = Incoming(player_id,player_name,room_id)
 
-		with rooms_lock:
-			if room_id not in rooms:
-				#create a new room and stuff
-				rooms[room_id] = GameRoom()
+
+		else:
+			raise Exception("Player was already waiting for a game, he should try again.")
+
+	with rooms_lock:
+		if room_id not in rooms:
+			#create a new room and stuff
+			rooms[room_id] = GameRoom()
 	
 
 ###############################################################################################################################

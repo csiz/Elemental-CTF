@@ -27,7 +27,7 @@
 						if(main.user.display_name.length > 0){
 							message.text = "Name: " + main.user.display_name + "\nPoints: " + main.user.points;
 						}else{
-							message.text = "We sense you're new here, so please play the Tutorial first, its pretty short.";
+							message.text = "We sense you're new here, so please play the Tutorial first, it's pretty short.";
 						}
 					});
 			

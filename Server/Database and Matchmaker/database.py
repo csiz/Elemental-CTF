@@ -51,6 +51,13 @@ def CheckAvailability(id):
 
 	return response
 
+def GetName(id):
+	with data_lock:
+		if id in data:
+			return data[id].name
+		else:
+			return None
+
 def Check(id, password):
 	with data_lock:
 		response = None

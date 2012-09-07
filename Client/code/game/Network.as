@@ -8,6 +8,7 @@
 	import flash.geom.Point;
 	import flash.utils.Timer;
     import flash.events.TimerEvent;
+    import code.User;
 
 	//Object has body,id,role,unique
 
@@ -247,7 +248,7 @@
 				var chat_text = new ByteArray();
 				socket.readBytes(chat_text,0,64);
 				
-				game.ui.ChatLine(chat_id.toString() + ": " + Utils.Strip(chat_text));
+				game.ui.PlayerChat(chat_id,Utils.Strip(chat_text));
 			}
 			
 			//read and process the players
@@ -264,6 +265,10 @@
 				var player_id = socket.readInt();
 				var player_team = team_map[socket.readInt()];
 				var time_of_update = socket.readFloat();
+				var points = socket.readInt();
+				if(game.users[player_id]){
+					game.users[player_id].points = points;
+				}
 				var counter = socket.readInt();
 				for(;counter > 0;counter --){
 					var unique = socket.readInt();
@@ -443,6 +448,14 @@
 										
 										sync.start();
 										
+										//start names update loop
+										var name_timer:Timer = new Timer(3000,1);
+										name_timer.addEventListener(TimerEvent.TIMER, function(event){
+																	NamesUpdateLoop(state_number,name_timer);
+															   });
+										
+										name_timer.start();
+										
 									});
 				}
 			}else{//no connection means its in tutorial mode, so do nothing
@@ -451,6 +464,46 @@
 				action_buffer = 0;
 				flag_update = null;
 			}
+		}
+		public function NamesUpdateLoop(state_number:int,timer:Timer){
+			if(state_number != game.state_number){
+				return;
+			}
+			if(connection){
+				connection.Add (function(socket:Socket){
+									socket.writeInt(15);//the request
+									socket.writeInt(13);//flush
+								},4,function(socket:Socket){
+									var nr_of_names = socket.readInt();
+									if(connection){
+										connection.Continue(Connection.Nothing,nr_of_names * 40,function(socket:Socket){
+																for(var id in game.users){
+																	game.users[id].mail = "marked";
+																}
+																for(;nr_of_names > 0;nr_of_names--){
+																	var player_id = socket.readInt();
+																	var player_points = socket.readInt();
+																	var player_name = new ByteArray();
+																	socket.readBytes(player_name,0,32);
+																	if(!(game.users[player_id])){
+																		game.users[player_id] = new User();
+																	}
+																	game.users[player_id].display_name = Utils.Strip(player_name);
+																	game.users[player_id].points = player_points;
+																	game.users[player_id].mail = "verified";
+																}
+																for(id in game.users){
+																	if(game.users[id].mail == "marked"){
+																		delete game.users[id];
+																	}
+																}
+															});//this ends the continue
+									}
+								});//this ends the add
+			}
+			//updates end here
+			timer.reset();
+			timer.start();
 		}
 		public function MeUpdateLoop(state_number:int,timer:Timer){
 			if(state_number != game.state_number){

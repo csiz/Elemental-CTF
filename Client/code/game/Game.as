@@ -39,7 +39,7 @@
 		public var flag_list:Dictionary;
 		public var water_flag:Flag;
 		public var fire_flag:Flag;
-		public var users:Array;
+		public var users:Dictionary;
 		//newtork data
 		public var network:Network;
 		//user interface
@@ -97,11 +97,11 @@
 		}
 		
 		public function Start(){
-			stage.addEventListener(KeyboardEvent.KEY_DOWN,KeyDown);
-			stage.addEventListener(KeyboardEvent.KEY_UP,KeyUp);
-			stage.addEventListener(MouseEvent.MOUSE_DOWN,MouseDown);
-			stage.addEventListener(MouseEvent.MOUSE_UP,MouseUp);
-			stage.addEventListener(Event.ENTER_FRAME,GameLoop);
+			main.KeyDown = KeyDown;
+			main.KeyUp = KeyUp;
+			main.MouseDown = MouseDown;
+			main.MouseUp = MouseUp;
+			addEventListener(Event.ENTER_FRAME,GameLoop);
 			
 			network.Start(this);
 			network.Load();
@@ -137,7 +137,7 @@
 			player_list = new Dictionary(true);
 			projectile_list = new Dictionary(true);
 			flag_list = new Dictionary(true);
-			users = new Array();
+			users = new Dictionary(true);
 			box2d = new Box2d(levels,movie,this);
 
 			box2d.LoadLevel(level);

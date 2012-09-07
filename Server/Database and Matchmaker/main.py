@@ -69,7 +69,7 @@ def ChangeLogin(stream):
 def FindGame(stream):
 	(id, password, region) = stream.read('32s32s32s')
 	if database.Check(id,password):
-		result = matchmaker.Find(id,region)
+		result = matchmaker.Find(id,database.GetName(id),region)
 		if result:
 			(address,port,room) = result
 			stream.write('i32si32s',1,address,port,room)
@@ -81,7 +81,7 @@ def FindGame(stream):
 def FindRoom(stream):
 	(id, password, region, room_id) = stream.read('32s32s32s32s')
 	if database.Check(id,password):
-		result = matchmaker.FindRoom(id,room_id,region)
+		result = matchmaker.FindRoom(id,database.GetName(id),room_id,region)
 		if result:
 			(address,port,room) = result
 			stream.write('i32si32s',1,address,port,room)

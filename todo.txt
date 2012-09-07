@@ -4,12 +4,9 @@ there may be more flag problems, be aware of them
 
 todo--------------------------------------------------------------------------------------------------
 
-I really need UDP
-
-
 more levels
 floating names
-scoreboard
+
 ask reddit for graphics
 
 some animations

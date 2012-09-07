@@ -10,6 +10,7 @@
 	import code.menu.LoginScreen;
 	import flash.events.KeyboardEvent;
 	import flash.ui.Keyboard;
+	import flash.events.MouseEvent;
 	
 	
 
@@ -19,6 +20,11 @@
 		public static const PORT = 25971;
 		public static const WIDTH = 650;
 		public static const HEIGHT = 400;
+		
+		public var KeyDown = function(event){}
+		public var KeyUp = function(event){}
+		public var MouseDown = function(event){}
+		public var MouseUp = function(event){}
 		
 		public var store_data:Boolean = true;
 		public var id = new ByteArray();
@@ -41,6 +47,11 @@
 									 event.currentTarget.tabChildren = false;
 								   }
 								});//capture tab events
+								
+			stage.addEventListener(KeyboardEvent.KEY_DOWN,function(event){KeyDown(event);});
+			stage.addEventListener(KeyboardEvent.KEY_UP,function(event){KeyUp(event);});
+			stage.addEventListener(MouseEvent.MOUSE_DOWN,function(event){MouseDown(event);});
+			stage.addEventListener(MouseEvent.MOUSE_UP,function(event){MouseUp(event);});
 			
 			Add(loading_screen);
 			connection = new Connection(Main.SERVER,Main.PORT);

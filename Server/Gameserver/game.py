@@ -3,9 +3,10 @@ import time
 
 
 class Player:
-	def __init__(self,id):
+	def __init__(self,id,name):
 		self.id = id
-
+		self.name = name
+		self.points = 0
 		#state information
 		self.win = False
 		self.team = 0
@@ -73,7 +74,7 @@ class GameRoom:
 				2:Object(0,None,None,0,0,None,None,None)#water flag
 			}#unique is the carrier or 0 if its origin or -1 if its floating, x and y are the positions if its floating
 			for id in self.players:
-				self.players[id].__init__(id)
+				self.players[id].__init__(id,self.players[id].name)
 
 			#new state
 			self.state_number += 1
@@ -89,9 +90,9 @@ class GameRoom:
 			
 
 
-	def NewPlayer(self):
+	def NewPlayer(self,name):
 		with self.lock:
-			player = Player(self.id_count)
+			player = Player(self.id_count,name)
 			self.id_count += 1
 			self.players[player.id] = player
 			return player

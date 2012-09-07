@@ -53,9 +53,10 @@ def CreateRoom(server_id,room_id = None,private = False):
 
 	return room_id
 
+def SendPlayer(server,player_id,player_name,room_id):
+	server.stream.write('i32s32s32s',1,player_id,player_name,room_id)
 
-
-def Find(player_id,region):
+def Find(player_id,player_name,region):
 	with servers_lock:
 		if len(priority_sort[region]):
 			if servers[priority_sort[region][0]].priority:
@@ -81,11 +82,11 @@ def Find(player_id,region):
 			return None
 		
 	response = (server.address,server.port,room_id)
-	server.stream.write('i32s32s',1,player_id,room_id)
+	SendPlayer(server,player_id,player_name,room_id)
 
 	return response
 
-def FindRoom(player_id,room_id,region):
+def FindRoom(player_id,player_name,room_id,region):
 	with servers_lock:
 		if room_id not in rooms:
 			if len(priority_sort[region]):
@@ -99,10 +100,9 @@ def FindRoom(player_id,room_id,region):
 		else:
 			server = servers[rooms[room_id].server]
 
-		response = (server.address,server.port,room_id)
-		server.stream.write('i32s32s',1,player_id,room_id)
-
-		return response
+	response = (server.address,server.port,room_id)
+	SendPlayer(server,player_id,player_name,room_id)
+	return response
 
 
 ###############################################################################################################################
