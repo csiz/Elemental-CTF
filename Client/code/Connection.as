@@ -2,6 +2,7 @@
 	
 	import flash.net.Socket;
 	import flash.events.*;
+	import flash.utils.Timer;
 	
 	
 	
@@ -9,6 +10,8 @@
 		private var socket:Socket;
 		private var closed:Function;
 		private var opened:Function;
+		
+		public var timer:Timer = null;
 		
 		private var writeQueue:Array;
 		private var readQueue:Array;
@@ -54,7 +57,16 @@
 			opened();
 			process = real_process;
 			process();
-			
+			timer = new Timer(50,1);
+			timer.addEventListener(TimerEvent.TIMER,function(event){flush_loop(timer);});
+			timer.start();
+		}
+		private function flush_loop(timer){
+			if(socket.connected){
+				socket.flush();
+				timer.reset();
+				timer.start();
+			}
 		}
 		private function closeHandler(event:Event){
 			status = "done";
@@ -75,7 +87,6 @@
 			status = "busy";
 			while(writeQueue.length){
 				writeQueue[0](socket);
-				socket.flush();
 				writeQueue[0] = Nothing;
 				if(socket.bytesAvailable >= expectQueue[0]){
 					writeQueue.shift();

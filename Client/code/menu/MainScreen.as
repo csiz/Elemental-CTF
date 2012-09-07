@@ -12,6 +12,7 @@
 	public class MainScreen extends MovieClip{
 		private var functions:Array = new Array();
 		private var ready:Boolean = false;
+		public var last_room:ByteArray = null;
 		public var main:Main;
 		
 		public function MainScreen(main:Main,connection:Connection = null){
@@ -36,6 +37,12 @@
 			account_button.addEventListener(MouseEvent.CLICK, Account);
 			//EndConnection();
 		}
+		public function PreviousRoom(room:ByteArray){
+			if(room){
+				room_text.text = room.toString();
+			}
+		}
+		
 		public function PlayTheGame(room_id:String = null){
 			//todo retry if it fails
 			main.connection.Add (function(socket:Socket)

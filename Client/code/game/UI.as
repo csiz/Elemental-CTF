@@ -11,15 +11,18 @@
 	public class UI extends MovieClip {
 		public var game:Game;
 		public var chat_frames = 600;
+		public var score_board = new MovieClip();
 		
 		public function UI(game:Game) {
 			this.game = game
-			chose_player_dialog.melee_fire.addEventListener(MouseEvent.CLICK,function(){FinishPlayerSelect("melee fire","melee");});
-			chose_player_dialog.melee_water.addEventListener(MouseEvent.CLICK,function(){FinishPlayerSelect("melee water","melee");});
-			chose_player_dialog.ranged_fire.addEventListener(MouseEvent.CLICK,function(){FinishPlayerSelect("ranged fire","ranged");});
-			chose_player_dialog.ranged_water.addEventListener(MouseEvent.CLICK,function(){FinishPlayerSelect("ranged water","ranged");});
+			chose_player_dialog.melee_fire.addEventListener(MouseEvent.CLICK,function(event){FinishPlayerSelect("melee fire","melee");});
+			chose_player_dialog.melee_water.addEventListener(MouseEvent.CLICK,function(event){FinishPlayerSelect("melee water","melee");});
+			chose_player_dialog.ranged_fire.addEventListener(MouseEvent.CLICK,function(event){FinishPlayerSelect("ranged fire","ranged");});
+			chose_player_dialog.ranged_water.addEventListener(MouseEvent.CLICK,function(event){FinishPlayerSelect("ranged water","ranged");});
 			chose_player_dialog.visible = false;
 			overview_dialog.visible = false;
+			
+			overview_dialog.menu_button.addEventListener(MouseEvent.CLICK,function(event){game.End();});
 			
 			chat_input.visible = false;
 			chat_input.addEventListener(FocusEvent.FOCUS_OUT, function(event){game.chatting = false;chat_input.visible = false;chat_frames = 600;});
@@ -27,6 +30,28 @@
 			chat_input.addEventListener(KeyboardEvent.KEY_DOWN,WriteChat);
 			
 			addEventListener(Event.ENTER_FRAME, ChatVisibility);
+			overview_dialog.score_scroll_pane.source = score_board;
+			overview_dialog.score_scroll_pane.focusRect = false;
+			addEventListener(Event.ENTER_FRAME, ScoreUpdater);
+			
+			
+		}
+		
+		public function ScoreUpdater(event){
+			score_board.removeChildren();
+			var sy = 0;
+			var objs = game.network.objects;
+			for(var i in objs){
+				var text_field = new TextField();
+				text_field.y = sy;
+				text_field.x = 20;
+				sy += 25;
+				text_field.text = i.toString() + ": " + objs[i].role + " " + objs[i].body.GetPosition().x.toFixed(0) + ", " + objs[i].body.GetPosition().y.toFixed(0);
+				text_field.width = 320;
+				text_field.selectable = false;
+				score_board.addChild(text_field);
+			}
+			overview_dialog.score_scroll_pane.update()
 		}
 		
 		public function StartPlayerSelect(){

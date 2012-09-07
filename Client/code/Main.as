@@ -8,11 +8,13 @@
 	import code.menu.TutorialSlides;
 	import flash.net.Socket;
 	import code.menu.LoginScreen;
+	import flash.events.KeyboardEvent;
+	import flash.ui.Keyboard;
 	
 	
 
 	public class Main extends MovieClip{
-		public static const SERVER = "localhost";
+		public static const SERVER = "86.122.32.2";
 		public static var REGION = "local";
 		public static const PORT = 25971;
 		public static const WIDTH = 650;
@@ -33,6 +35,13 @@
 
 		
 		public function Main(){
+			stage.addEventListener(KeyboardEvent.KEY_DOWN,function(event:KeyboardEvent){
+								   if (event.keyCode == Keyboard.TAB)
+								   {
+									 event.currentTarget.tabChildren = false;
+								   }
+								});//capture tab events
+			
 			Add(loading_screen);
 			connection = new Connection(Main.SERVER,Main.PORT);
 			connection.addEventListener(Disconnect.SERVER_ERROR,ServerError);
@@ -75,9 +84,10 @@
 			}
 		}
 		
-		public function Menu(){
+		public function Menu(room:ByteArray = null){
 			Add(loading_screen);
 			var menu = new MainScreen(this);
+			menu.PreviousRoom(room);
 			menu.OnReady(function(){Add(menu);});
 		}
 		public function LoadGame(address:String,port:int,room:ByteArray){

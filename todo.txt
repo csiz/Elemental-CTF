@@ -4,8 +4,10 @@ there may be more flag problems, be aware of them
 
 todo--------------------------------------------------------------------------------------------------
 
+I really need UDP
+
+
 more levels
-back button in the game ui, this back button sets the room_text to the room_id i was just in
 floating names
 scoreboard
 ask reddit for graphics

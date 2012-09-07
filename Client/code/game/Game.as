@@ -39,6 +39,7 @@
 		public var flag_list:Dictionary;
 		public var water_flag:Flag;
 		public var fire_flag:Flag;
+		public var users:Array;
 		//newtork data
 		public var network:Network;
 		//user interface
@@ -136,6 +137,7 @@
 			player_list = new Dictionary(true);
 			projectile_list = new Dictionary(true);
 			flag_list = new Dictionary(true);
+			users = new Array();
 			box2d = new Box2d(levels,movie,this);
 
 			box2d.LoadLevel(level);
@@ -151,6 +153,13 @@
 			ui.overview_dialog.win_state.text = "todo";
 			ui.overview_dialog.level.text = level.toString();
 			
+		}
+		
+		public function End(){
+			network.Stop();
+			running = false;
+			state_number = -1;
+			main.Menu(network.room);
 		}
 		
 		public function Spawn(flavor:String,type:String){
@@ -197,11 +206,11 @@
 			if(Math.sqrt(Math.pow(true_x - my_x,2) + Math.pow(true_y - my_y,2)) > 10){
 				box2d.ChangePositionAndSpeed(obj.body,x,y,vx,vy);
 			}else{
-			//change the speed so that it moves towards true position in 300+3lag ammount of time
+			//change the speed so that it moves towards true position in 400 ammount of time
 				
 				
-				my_vx = vx + ( (true_x-my_x) / 0.5 );
-				my_vy = vy + ( (true_y-my_y) / 0.5 );
+				my_vx = vx + ( (true_x-my_x) / 0.3 );
+				my_vy = vy + ( (true_y-my_y) / 0.3 );
 				box2d.ChangePositionAndSpeed(obj.body,my_x,my_y,my_vx,my_vy);
 				//box2d.Accelerate(obj.body, 2 * (true_x-my_x) / Math.pow(accel_time,2),2 * (true_y-my_y) / Math.pow(accel_time,2));
 				

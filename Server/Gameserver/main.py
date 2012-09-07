@@ -18,7 +18,8 @@ from socketstream import *
 from game import * #GameRoom,Player class import
 
 
-SERVER,SERVER_PORT = 'localhost', 25972
+#SERVER,SERVER_PORT = 'localhost', 25972
+SERVER,SERVER_PORT = "86.122.32.2", 25972
 HOST, PORT = '', 25973 #socket.gethostname(), 25971
 ID = b'1'
 PASSWORD = hashlib.sha256(b'ep2').digest()
@@ -47,6 +48,16 @@ def PlayerLost(player,room):
 def MessageDone(stream,player,room):
 	pass
 	#todo, remove plaer successfully
+
+def Flush(stream,player,room):
+	stream.flush()
+
+def StopFlushing(stream,player,room):
+	pass
+
+def FlushButNotNow(stream,player,room):
+	pass
+
 
 def Synchronize(stream,player,room):
 	stream.write('f',time.time() - room.time)
@@ -82,7 +93,7 @@ def SendGameState(stream,player,room):
 
 	with room.lock:
 		for id in room.players:
-			if (id != player.id) and ( abs(time.time() - room.time - room.players[id].time) < 0.5 ):
+			if (id != player.id) and ( abs(time.time() - room.time - room.players[id].time) < 1.5 ):
 				nr_of_bytes += 16 + ( 32 * len(room.players[id].objects) )
 				players_to_send.append(copy.deepcopy(room.players[id]))
 
@@ -247,6 +258,9 @@ MessageHandler = {#reads, returns:
 	9:ReceiveWin,#reads ii state,team
 	10:ReceiveDamage,#read iffiii, state, time, damage, target_id, target_unique, source_unique
 	11:ReceiveChat,#read i64s, state, text
+	12:StopFlushing,#not in use
+	13:Flush,
+	14:FlushButNotNow,#not in use
 
 
 }
@@ -266,7 +280,6 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 			while message_id:
 				(message_id,) = stream.read('i')
 				MessageHandler[message_id](stream,player,room)
-				stream.flush()
 		except Exception as error:
 			print("A player has been lost, the error was:",str(error),"while processing the message:",message_id)
 			PlayerLost(player,room)
