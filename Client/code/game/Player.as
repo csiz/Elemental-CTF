@@ -5,8 +5,10 @@
 	import flash.geom.Point;
 	import Box2D.Common.Math.b2Vec2;
 	import code.game.players.*;
+	import flash.text.TextField;
 
 	public class Player{
+		public var player_label:TextField;
 		public var game:Game;
 		public var sprite:PlayerAnimate;
 		public var flavor:String;
@@ -162,6 +164,12 @@
 			sprite.y = 20 * body.GetPosition().y;
 			game.movie.addChild(sprite);
 			game.network.Add(this);
+			
+			//create the label
+			player_label = new TextField();
+			player_label.multiline = false;
+			player_label.selectable = false;
+			game.ui.addChild(player_label);
 		}
 		public function Right(timeStep:Number)
 		{
@@ -262,6 +270,7 @@
 				delete game.player_list[body];
 				game.network.Remove(unique);
 				removed = true;
+				game.ui.removeChild(player_label);
 			}
 		}
 		public function Update(timeStep:Number){
@@ -282,6 +291,18 @@
 				health = Math.min(maxHealth,health);
 			}
 			sprite.Update(timeStep);
+			//update the label
+			if(game.users[id]){
+				if(game.users[id].display_name.length){
+					player_label.text = game.users[id].display_name;
+				}else{
+					player_label.text = id.toString();
+				}
+			}else{
+				player_label.text = id.toString();
+			}
+			player_label.x = sprite.x + game.movie.x + 10;
+			player_label.y = sprite.y + game.movie.y - 40;
 		}
 		public function Attack(damage:Number, id:int,unique:int){
 			if(hitTimer > 50){//to exclude double attacks and such, this may present some problems later

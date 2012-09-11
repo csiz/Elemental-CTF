@@ -103,10 +103,23 @@
 		}
 		public function LoadGame(address:String,port:int,room:ByteArray){
 			Add(loading_screen);
-			var network:Network = new Network(room);
+			var network:Network = new Network(this,room);
 			network.Connect(address,port,id);
 			var game = new Game(this,network);
-			network.OnReady(function(){Add(game);game.Start();stage.focus = game});
+			network.OnReady(function(){
+								Add(game);
+								game.Start();
+								stage.focus = game;
+							});
+		}
+		
+		public function OfflineGame(){
+			var network:Network = new Network(this);
+			var game = new Game(this,network);
+			Add(game);
+			game.Start();
+			game.Reload(0,0);//load state number 0 and lvl 0 as a tutorial
+			stage.focus = game
 		}
 		
 		public function LoadTutorial(){
@@ -117,7 +130,7 @@
 			Add(new code.menu.LoginScreen(this,message));
 		}
 		public function ServerError(event){
-			Add(new DisconnectScreen());
+			Add(new code.menu.DisconnectScreen(this));
 		}
 		public function LoadingScreen(){
 			Add(loading_screen);

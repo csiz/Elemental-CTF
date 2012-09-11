@@ -104,8 +104,7 @@
 			addEventListener(Event.ENTER_FRAME,GameLoop);
 			
 			network.Start(this);
-			network.Load();
-		}
+			network.Load();		}
 		
 		public function Reload(state_number:int,level:int){
 			//first we clear everything
@@ -122,7 +121,6 @@
 			this.state_number = state_number;
 			this.level = level;
 			this.damage_control = new Dictionary(true);
-			
 			background = levels.level[level].background;
 			addChild(background);
 
@@ -131,7 +129,6 @@
 			
 			ui = new UI(this);
 			addChild(ui);
-			
 			me = null;
 			
 			player_list = new Dictionary(true);
@@ -139,7 +136,6 @@
 			flag_list = new Dictionary(true);
 			users = new Dictionary(true);
 			box2d = new Box2d(levels,movie,this);
-
 			box2d.LoadLevel(level);
 			movie.x = Main.WIDTH / 2 - levels.level[level].width * 20 / 2;
 			movie.y = Main.HEIGHT / 2 - levels.level[level].height * 20 / 2;
@@ -152,6 +148,7 @@
 			ui.StartPlayerSelect();
 			ui.overview_dialog.win_state.text = "todo";
 			ui.overview_dialog.level.text = level.toString();
+			
 			
 		}
 		

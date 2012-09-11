@@ -5,7 +5,6 @@ there may be more flag problems, be aware of them
 todo--------------------------------------------------------------------------------------------------
 
 more levels
-floating names
 
 ask reddit for graphics
 

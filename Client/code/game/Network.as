@@ -9,7 +9,8 @@
 	import flash.utils.Timer;
     import flash.events.TimerEvent;
     import code.User;
-
+	import code.Main;
+	
 	//Object has body,id,role,unique
 
 
@@ -17,6 +18,7 @@
 		public var room:ByteArray;
 		public var id:int;
 		public var game:Game;
+		public var main:Main;
 		public var objects:Dictionary;
 		public var water_flag:Flag;
 		public var fire_flag:Flag;
@@ -41,7 +43,8 @@
 			return (getTimer()*0.001) + reference_time;
 		}
 		
-		public function Network(room:ByteArray){
+		public function Network(main:Main,room:ByteArray = null){
+			this.main = main;
 			this.room = room;
 			team_map = new Dictionary();
 			team_map["neutral"] = 0;
