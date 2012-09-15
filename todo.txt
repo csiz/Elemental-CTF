@@ -3,10 +3,10 @@ there may be more flag problems, be aware of them
 
 
 todo--------------------------------------------------------------------------------------------------
+minimap
+neutral
 
 more levels
-
-ask reddit for graphics
 
 some animations
 and animation programming

@@ -290,8 +290,6 @@
 				health += regen * timeStep/1000;
 				health = Math.min(maxHealth,health);
 			}
-			sprite.Update(timeStep);
-			//update the label
 			if(game.users[id]){
 				if(game.users[id].display_name.length){
 					player_label.text = game.users[id].display_name;
